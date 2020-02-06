@@ -1,6 +1,7 @@
-module Lib
-    ( someFunc
-    ) where
+module Lib(
+  module Expr,
+  module Scalar
+) where
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+import Expr
+import Scalar

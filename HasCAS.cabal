@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cb8004de3e52ad9cb27ef4f31d531d59c9b3ce1f422c6999a27f4c195d146f90
+-- hash: f1f39c1d19654eef66ee34932c3a3d694440f6a5fbbe3e1e4e212dc4fddcf6e0
 
 name:           HasCAS
 version:        0.1.0.0
@@ -27,7 +27,9 @@ source-repository head
 
 library
   exposed-modules:
+      Expr
       Lib
+      Scalar
   other-modules:
       Paths_HasCAS
   hs-source-dirs:
