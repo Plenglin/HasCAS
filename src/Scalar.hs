@@ -2,7 +2,12 @@ module Scalar where
 
 import Data.Ratio
 
-data Scalar = IScl Integer | RaScl Rational | ReScl Double deriving Show
+data Scalar = IScl Integer | RaScl Rational | ReScl Double deriving Eq
+
+instance Show Scalar where
+  show (IScl x) = show x
+  show (RaScl x) = show x
+  show (ReScl x) = show x
 
 
 normalizeTypes :: Scalar -> Scalar -> (Scalar, Scalar)

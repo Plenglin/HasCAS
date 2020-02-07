@@ -4,7 +4,7 @@ import Lib
 
 
 ex :: Expr
-ex = Const (fromInteger 5) + Var "x"
+ex = fromInteger 5 + Var "x" + (Var "y" * Var "z") + fromInteger 8 + fromInteger 2
 
 main :: IO ()
-main = putStrLn (show ex)
+main = putStrLn "T"--(show (combineLikeTerms Add ex))
