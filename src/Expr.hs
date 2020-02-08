@@ -4,7 +4,7 @@ import Debug.Trace
 import Scalar
 
 data BOp = Add | Mul | Sub | Div | Pow deriving Eq
-data UOp = Abs | Sign deriving Show
+data UOp = Abs | Sign deriving (Show, Eq)
 
 instance Show BOp where
   show Add = "+"
@@ -19,8 +19,10 @@ identity Add = fromInteger 0
 scalarOp :: BOp -> Scalar -> Scalar -> Scalar
 scalarOp Add = (+)
 scalarOp Mul = (*)
+scalarOp Sub = (-)
+scalarOp Div = (/)
 
-data Expr = Const Scalar | Var String | UExpr UOp Expr | BExpr Expr BOp Expr
+data Expr = Const Scalar | Var String | UExpr UOp Expr | BExpr Expr BOp Expr deriving Eq
 
 parenShow :: Bool -> Expr -> String
 parenShow _ (Var v) = v
@@ -88,11 +90,14 @@ evalConstExprs (BExpr a op b) = BExpr (evalConstExprs a) op (evalConstExprs b)
 evalConstExprs x = x
 
 -- | Given an expression tree that has been straightened, combines constants under the operation op.
-combineConstantsHelper :: BOp -> Expr -> Expr
-combineConstantsHelper op (BOp (Const a) op2 (BOp (Const b) op3 c))
-  | op == op2 && op2 == op3 = BOp (Const (scalarExpr op a b)) op c'where c' = combineConstantsHelper op c
+{-combineConstantsHelper :: BOp -> Expr -> Expr
+combineConstantsHelper op (BExpr (Const a) op2 (BExpr (Const b) op3 c))
+  | op == op2 && op2 == op3 = BExpr (Const (scalarExpr op a b)) op c'
+    where c' = combineConstantsHelper op c
 
-combineConstantsHelper op (BOp (Const a) op2 (BOp b op3 c))
-  | op == op2 && op2 == op3 = BOp (Const a) op c' where c' = combineConstantsHelper op c
+combineConstantsHelper op (BExpr (Const a) op2 (BExpr b op3 c))
+  | op == op2 && op2 == op3 = BExpr (Const a) op c' 
+    where c' = combineConstantsHelper op c
 
-combineConstantsHelper op a b = BOp op a b
+combineConstantsHelper op a b = BExpr op a b
+-}

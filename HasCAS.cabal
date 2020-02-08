@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f1f39c1d19654eef66ee34932c3a3d694440f6a5fbbe3e1e4e212dc4fddcf6e0
+-- hash: db1feef0f1bdfbf377ff549d883734b14835fbfe3c5f3f7f189186e00b0dc22c
 
 name:           HasCAS
 version:        0.1.0.0
@@ -30,6 +30,7 @@ library
       Expr
       Lib
       Scalar
+      Treearange
   other-modules:
       Paths_HasCAS
   hs-source-dirs:
@@ -60,5 +61,7 @@ test-suite HasCAS-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HasCAS
+    , hspec
+    , QuickCheck
     , base >=4.7 && <5
   default-language: Haskell2010
