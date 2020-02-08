@@ -30,7 +30,7 @@ library
       Expr
       Lib
       Scalar
-      Treearange
+      TreeUtils
   other-modules:
       Paths_HasCAS
   hs-source-dirs:
