@@ -12,10 +12,10 @@ reattach op acc (BExpr a op' b)
 reattach op acc b = exprOp op b acc
 
 -- | Rotates an expression tree to become a straightened tree.
-reorient :: BOp -> Expr -> Expr
-reorient op (BExpr a op' b) 
-  | op == op' = reattach op (reorient op a) (reorient op b)
-reorient op x = x
+straighten :: BOp -> Expr -> Expr
+straighten op (BExpr a op' b) 
+  | op == op' = reattach op (straighten op a) (straighten op b)
+straighten op x = x
 
 -- | Evaluates all expressions involving constants in the expression tree.
 evalConstExprs :: Expr -> Expr
@@ -36,14 +36,32 @@ evalConstExprs (BExpr a op b) = BExpr (evalConstExprs a) op (evalConstExprs b)
 evalConstExprs x = x
 
 -- | Given an expression tree that has been straightened, combines constants under the operation op.
-{-combineConstantsHelper :: BOp -> Expr -> Expr
-combineConstantsHelper op (BExpr (Const a) op2 (BExpr (Const b) op3 c))
-  | op == op2 && op2 == op3 = BExpr (Const (scalarExpr op a b)) op c'
-    where c' = combineConstantsHelper op c
+combineConst :: BOp -> Expr -> Expr
+combineConst op (BExpr (Const a) op2 (Const b))
+  | op == op2 = Const (scalarOp op a b)
 
-combineConstantsHelper op (BExpr (Const a) op2 (BExpr b op3 c))
-  | op == op2 && op2 == op3 = BExpr (Const a) op c' 
-    where c' = combineConstantsHelper op c
+combineConst op (BExpr (Const a) op2 (BExpr (Const b) op3 c))
+  | op == op2 && op2 == op3 = 
+    case combineConst op c of
+      Const c' -> Const (fs a (fs b c'))
+      c' -> fe (Const a) (fe (Const b) c')
+    where fs = scalarOp op
+          fe = exprOp op
 
-combineConstantsHelper op a b = BExpr op a b
--}
+combineConst op (BExpr (Const a) op2 (BExpr b op3 c))
+  | op == op2 && op2 == op3 = 
+    case combineConst op c of
+      Const c' -> fe (Const (fs a c')) b
+      c' -> fe (Const a) (fe b c')
+    where fs = scalarOp op
+          fe = exprOp op
+
+combineConst op (BExpr a op2 (BExpr (Const b) op3 c))
+  | op == op2 && op2 == op3 = 
+    case combineConst op c of
+      Const c' -> BExpr (Const (fs b c')) op a
+      c' -> BExpr (Const b) op (fe a c')
+    where fs = scalarOp op
+          fe = exprOp op
+
+combineConst op x = x
