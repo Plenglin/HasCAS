@@ -14,7 +14,7 @@ cca = combineConst Add sa
 
 main :: IO ()
 main = do
-  putStrLn (show a)
-  putStrLn (show eca)
-  putStrLn (show sa)
-  putStrLn (show cca)
+  putStrLn ("Original: " ++ (show a))
+  putStrLn ("Const exprs: " ++ (show eca))
+  putStrLn ("Straighten: " ++ (show sa))
+  putStrLn ("Reduced: " ++ (show cca))

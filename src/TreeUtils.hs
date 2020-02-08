@@ -37,14 +37,18 @@ evalConstExprs x = x
 
 -- | Given an expression tree that has been straightened, combines constants under the operation op.
 combineConst :: BOp -> Expr -> Expr
+
 combineConst op (BExpr (Const a) op2 (Const b))
   | op == op2 = Const (scalarOp op a b)
+
+combineConst op (BExpr a op2 (Const b))
+  | op == op2 = BExpr (Const b) op a
 
 combineConst op (BExpr (Const a) op2 (BExpr (Const b) op3 c))
   | op == op2 && op2 == op3 = 
     case combineConst op c of
       Const c' -> Const (fs a (fs b c'))
-      c' -> fe (Const a) (fe (Const b) c')
+      c' -> fe (Const (fs a b)) c'
     where fs = scalarOp op
           fe = exprOp op
 
@@ -59,8 +63,16 @@ combineConst op (BExpr (Const a) op2 (BExpr b op3 c))
 combineConst op (BExpr a op2 (BExpr (Const b) op3 c))
   | op == op2 && op2 == op3 = 
     case combineConst op c of
-      Const c' -> BExpr (Const (fs b c')) op a
-      c' -> BExpr (Const b) op (fe a c')
+      Const c' -> fe (Const (fs b c')) a
+      c' -> fe (Const b) (fe a c')
+    where fs = scalarOp op
+          fe = exprOp op
+
+combineConst op (BExpr a op2 (BExpr b op3 c)) 
+  | op == op2 && op2 == op3 = 
+    case combineConst op c of
+      Const c' -> fe (Const c') (fe a b)
+      c' -> fe a (fe b c)
     where fs = scalarOp op
           fe = exprOp op
 
