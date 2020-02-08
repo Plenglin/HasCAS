@@ -15,6 +15,7 @@ instance Show BOp where
 
 identity :: BOp -> Scalar
 identity Add = fromInteger 0
+identity Mul = fromInteger 1
 
 scalarOp :: BOp -> Scalar -> Scalar -> Scalar
 scalarOp Add = (+)
@@ -22,7 +23,7 @@ scalarOp Mul = (*)
 scalarOp Sub = (-)
 scalarOp Div = (/)
 
-data Expr = Const Scalar | Var String | UExpr UOp Expr | BExpr Expr BOp Expr deriving Eq
+data Expr = Id | Const Scalar | Var String | UExpr UOp Expr | BExpr Expr BOp Expr deriving Eq
 
 parenShow :: Bool -> Expr -> String
 parenShow _ (Var v) = v
@@ -52,7 +53,13 @@ instance Fractional Expr where
   fromRational x = Const (RaScl x)
 
 exprOp :: BOp -> Expr -> Expr -> Expr
+exprOp op x Id = x
+exprOp op Id x = x
 exprOp op l r = BExpr l op r
+
+exprUOp :: UOp -> Expr -> Expr
+exprUOp op Id = Id
+exprUOp op x = UExpr op x
 
 fromReal :: Double -> Expr
 fromReal x = Const (ReScl x)

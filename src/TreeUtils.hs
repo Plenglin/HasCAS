@@ -2,6 +2,7 @@ module TreeUtils where
 
 
 import Expr
+import Scalar
 
 -- | Attaches the second expression tree to the rightmost node of the other. 
 reattach :: BOp -> Expr -> Expr -> Expr
@@ -35,45 +36,28 @@ evalConstExprs (BExpr a op (Const b)) =
 evalConstExprs (BExpr a op b) = BExpr (evalConstExprs a) op (evalConstExprs b)
 evalConstExprs x = x
 
+combineConstHelper :: BOp -> Scalar -> [Expr] -> Expr -> (Scalar, [Expr])
+combineConstHelper op scl terms (BExpr a op2 b)
+  | op == op2 =
+      case a of
+        Const a' -> combineConstHelper op (fs a' scl) terms b
+        _ -> combineConstHelper op scl (a:terms) b
+    where fe = exprOp op
+          fs = scalarOp op
+combineConstHelper op scl terms (Const a) = (scalarOp op a scl, terms)
+combineConstHelper op scl terms x = (scl, x:terms)
+
 -- | Given an expression tree that has been straightened, combines constants under the operation op.
 combineConst :: BOp -> Expr -> Expr
-
-combineConst op (BExpr (Const a) op2 (Const b))
-  | op == op2 = Const (scalarOp op a b)
-
-combineConst op (BExpr a op2 (Const b))
-  | op == op2 = BExpr (Const b) op a
-
-combineConst op (BExpr (Const a) op2 (BExpr (Const b) op3 c))
-  | op == op2 && op2 == op3 = 
-    case combineConst op c of
-      Const c' -> Const (fs a (fs b c'))
-      c' -> fe (Const (fs a b)) c'
-    where fs = scalarOp op
-          fe = exprOp op
-
-combineConst op (BExpr (Const a) op2 (BExpr b op3 c))
-  | op == op2 && op2 == op3 = 
-    case combineConst op c of
-      Const c' -> fe (Const (fs a c')) b
-      c' -> fe (Const a) (fe b c')
-    where fs = scalarOp op
-          fe = exprOp op
-
-combineConst op (BExpr a op2 (BExpr (Const b) op3 c))
-  | op == op2 && op2 == op3 = 
-    case combineConst op c of
-      Const c' -> fe (Const (fs b c')) a
-      c' -> fe (Const b) (fe a c')
-    where fs = scalarOp op
-          fe = exprOp op
-
-combineConst op (BExpr a op2 (BExpr b op3 c)) 
-  | op == op2 && op2 == op3 = 
-    case combineConst op c of
-      Const c' -> fe (Const c') (fe a b)
-      c' -> fe a (fe b c)
-    where fs = scalarOp op
-          fe = exprOp op
+combineConst op (BExpr a op2 b) 
+  | op == op2 = 
+      if scl == identity op 
+        then combinedTerms
+        else exprOp op (Const scl) combinedTerms
+    where (scl, terms) = combineConstHelper op (identity op) [] (BExpr a op b)
+          combinedTerms = 
+            case terms of
+              [] -> Id
+              t:ts -> foldl (\y x -> exprOp op x y) t ts
 
 combineConst op x = x
