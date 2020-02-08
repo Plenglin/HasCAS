@@ -48,7 +48,7 @@ combineConstHelper op scl terms (BExpr a op2 b)
 combineConstHelper op scl terms (Const a) = (scalarOp op a scl, terms)
 combineConstHelper op scl terms x = (scl, x:terms)
 
--- | Given an expression tree that has been straightened, combines constants under the operation op.
+-- | Given a straightened expression tree, combines constants under the top-level op.
 combineConst :: BOp -> Expr -> Expr
 combineConst op (BExpr a op2 b) 
   | op == op2 = 
@@ -62,3 +62,7 @@ combineConst op (BExpr a op2 b)
               t:ts -> foldl (\y x -> exprOp op x y) t ts
 
 combineConst op x = x
+
+-- | Given a straightened, const-less expression tree, combines single variables
+--combineVars :: BOp -> Expr -> Expr
+

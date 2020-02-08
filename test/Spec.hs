@@ -45,16 +45,23 @@ main = hspec $ do
     it "does nothing to expressions with different ops (3)" $ do
       let a = fromInteger 5 * (fromInteger 9 + fromInteger 2) in
         combineConst Add a `shouldBe` a
+
+    it "does nothing to Const on the right" $ do
+      let a = fromInteger 5 * Var "x" in
+        combineConst Add a `shouldBe` a
+        
+    it "swaps Const to the left" $ do
+      combineConst Add (Var "x" + fromInteger 3) `shouldBe` (fromInteger 3 + Var "x")
       
     it "extracts consts from inner left" $ do
       combineConst Add (Var "x" + (fromInteger 3 + Var "z")) 
         `shouldBe` fromInteger 3 + (Var "x" + Var "z")
 
-    it "extract consts from inner right" $ do
+    it "extracts consts from inner right" $ do
       combineConst Add (Var "x" + (Var "z" + fromInteger 3)) 
         `shouldBe` fromInteger 3 + (Var "x" + Var "z")
     
-    it "extract deeper consts" $ do
+    it "extracts deeper consts" $ do
       combineConst Add (Var "x" + (Var "z" + (Var "y" + fromInteger 3)))
         `shouldBe` fromInteger 3 + (Var "x" + (Var "z" + Var "y"))
     
