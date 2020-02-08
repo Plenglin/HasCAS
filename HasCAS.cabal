@@ -29,6 +29,7 @@ library
   exposed-modules:
       Expr
       Lib
+      Op
       Scalar
       TreeUtils
   other-modules:

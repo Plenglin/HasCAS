@@ -1,6 +1,7 @@
 module TreeUtils where
 
 
+import Op
 import Expr
 import Scalar
 
