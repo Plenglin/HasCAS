@@ -96,3 +96,17 @@ main = hspec $ do
     it "reduces expressions with deeper constants (2)" $ do
       combineConst Add (fromInteger 1 + (Var "x" + (Var "y" + fromInteger 3)))
         `shouldBe` fromInteger 4 + (Var "x" + Var "y")
+
+  describe "expandInverse" $ do
+    it "does nothing to Const" $ do
+      expandInverse (Const 3) `shouldBe` Const 3
+
+    it "does nothing to Var" $ do
+      expandInverse (Var "x") `shouldBe` Var "x"
+
+    it "converts subtractions" $ do
+      expandInverse (fromInteger 5 - fromInteger 2) `shouldBe` fromInteger 5 + (fromInteger (-1) * fromInteger 2)
+
+    it "converts divisions" $ do
+      expandInverse (fromInteger 5 / fromInteger 2) `shouldBe` fromInteger 5 * (BExpr (fromInteger 2) Pow (fromInteger (-1)))
+
