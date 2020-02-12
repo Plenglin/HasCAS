@@ -4,16 +4,16 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cc0c7a47f188c2b78b1a25875e84ea3f97276112b1f506170a731527337e63ff
+-- hash: f8edca6f949604e146ac6ad80139ed16c920da134f59c8d2ff6ae8fd6c47c8c9
 
 name:           HasCAS
 version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/githubuser/HasCAS#readme>
 homepage:       https://github.com/githubuser/HasCAS#readme
 bug-reports:    https://github.com/githubuser/HasCAS/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2020 Author name here
+author:         Maxim Yu
+maintainer:     maxim.yu314@gmail.com
+copyright:      2020 Maxim Yu
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
