@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.1.
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: db1feef0f1bdfbf377ff549d883734b14835fbfe3c5f3f7f189186e00b0dc22c
+-- hash: cc0c7a47f188c2b78b1a25875e84ea3f97276112b1f506170a731527337e63ff
 
 name:           HasCAS
 version:        0.1.0.0
@@ -27,10 +27,12 @@ source-repository head
 
 library
   exposed-modules:
+      Expand
       Expr
       Lib
       Op
       Scalar
+      Simplify
       TreeUtils
   other-modules:
       Paths_HasCAS
@@ -62,7 +64,7 @@ test-suite HasCAS-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HasCAS
-    , hspec
     , QuickCheck
     , base >=4.7 && <5
+    , hspec
   default-language: Haskell2010
