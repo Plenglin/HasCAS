@@ -1,23 +1,36 @@
-module TreeUtils(
-  reattach,
-  straighten
-) where
+module TreeUtils where
 
+import Data.Ratio
 
+import Scalar
 import Op
 import Expr
-import Scalar
 
--- | Attaches the second expression tree to the rightmost node of the other. 
-reattach :: BOp -> Expr -> Expr -> Expr
-reattach op acc (BExpr a op' (BExpr b op'' c))
-  | op == op' && op' == op'' = a + (b + (c + acc)) where (+) = exprOp op
-reattach op acc (BExpr a op' b)
-  | op == op' = a + (b + acc) where (+) = exprOp op
-reattach op acc b = exprOp op b acc
 
--- | Rotates an expression tree to become a straightened tree.
-straighten :: BOp -> Expr -> Expr
-straighten op (BExpr a op' b)
-  | op == op' = reattach op (straighten op a) (straighten op b)
-straighten op x = x
+
+touching :: BOp -> Expr -> [Expr]
+touching op x = go op [x] []
+  where go :: BOp -> [Expr] -> [Expr] -> [Expr]
+        go op ((B a op2 b):stack) found
+          | op == op2 = go op (b:a:stack) found  -- Reverse order to have the result be in order
+        go op (x:stack) found = go op stack (x:found)
+        go op [] found = found
+
+neg1 :: Expr
+neg1 = exprc (-1)
+
+expandInverse :: Expr -> Expr
+expandInverse (B a Sub b) = a + (neg1 * b)
+expandInverse (B a Div b) = a + (B b Pow neg1)
+expandInverse (U Neg x) = neg1 * x
+expandInverse (U Sqrt x) = (B x Pow (fromRational (1 % 2)))
+expandInverse (B a op b) = B (expandInverse a) op (expandInverse b)
+expandInverse x = x
+
+toSigma :: Expr -> Expr
+toSigma (B a Add b) = S (touching Add (B a Add b))
+toSigma x = x
+
+toProd :: Expr -> Expr
+toProd (B a Mul b) = P (touching Mul (B a Mul b))
+toProd x = x

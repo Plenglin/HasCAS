@@ -3,13 +3,13 @@ module Lib(
   module Scalar,
   module TreeUtils,
   module Op,
-  module Expand,
-  module Simplify
+  --module Expand,
+  --module Simplify
 ) where
 
 import Expr
 import Scalar
 import TreeUtils
 import Op
-import Expand
-import Simplify
+--import Expand
+--import Simplify

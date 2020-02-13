@@ -4,7 +4,7 @@ module Op where
 import Scalar
 
 data BOp = Add | Mul | Sub | Div | Pow deriving Eq
-data UOp = Abs | Sign | Log | Sin | Cos | Tan | Sec | Csc | Cot deriving (Show, Eq)
+data UOp = Neg | Sqrt | Abs | Sign | Log | Sin | Cos | Tan | Sec | Csc | Cot deriving (Show, Eq)
 
 instance Show BOp where
   show Add = "+"
@@ -14,8 +14,8 @@ instance Show BOp where
   show Pow = "^"
 
 identity :: BOp -> Scalar
-identity Add = fromInteger 0
-identity Mul = fromInteger 1
+identity Add = 0
+identity Mul = 1
 
 scalarOp :: BOp -> Scalar -> Scalar -> Scalar
 scalarOp Add = (+)

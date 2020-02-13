@@ -1,112 +1,57 @@
 import Test.Hspec
 import Test.QuickCheck
 import Control.Exception (evaluate)
+import Data.Ratio
 
 import Lib
 
 
-a :: Expr
-a = fromInteger 5 + ((Var "x") + (fromInteger 2 * fromInteger 5 * fromInteger 2))
+w = exprv "w"
+x = exprv "x"
+y = exprv "y"
+z = exprv "z"
 
 main :: IO ()
 main = hspec $ do
-  describe "evalConstExprs" $ do
-    it "does nothing to Const" $ do
-      evalConstExprs (fromInteger 132) `shouldBe` Const (fromInteger 132)
-
-    it "does nothing to Var" $ do
-      evalConstExprs (Var "abc") `shouldBe` Var "abc"
-
-    it "reduces a second-level expression" $ do
-      evalConstExprs (fromInteger 5 + (Var "x" + (fromInteger 2 * fromInteger 5 * fromInteger 2)))
-        `shouldBe` fromInteger 5 + (Var "x" + fromInteger 20)
-
-    it "reduces a multi-level const expression" $ do
-      evalConstExprs (fromInteger 5 + (fromInteger 4 - (fromInteger 2 * fromInteger 5 * fromInteger 2)))
-        `shouldBe` fromInteger (5 + (4 - (2 * 5 * 2)))
+  describe "touching" $ do
+    it "wraps single atoms in a list" $ do
+      touching Add x `shouldBe` [x]
+    it "groups single-level B's" $ do
+      touching Add (x + y) `shouldBe` [x, y]
+    it "groups linear B's" $ do
+      touching Add (x + (y + z)) `shouldBe` [x, y, z]
+    it "groups balanced B's" $ do
+      touching Add ((w + x) + (y + z)) `shouldBe` [w, x, y, z]
+    it "ignores different op B's (1)" $ do
+      touching Add ((w * x) + (y * z)) `shouldBe` [w * x, y * z]
+    it "ignores different op B's (1)" $ do
+      touching Add (z + (w + (y * z))) `shouldBe` [z, w, y * z]
+    it "ignores different op B's (2)" $ do
+      let a = (w * x) * (y * z) in
+        touching Add a `shouldBe` [a]
   
-  describe "combineConst" $ do
-    it "does nothing to Const" $ do
-      let a = fromInteger 32 in
-        combineConst Add a `shouldBe` a
-
-    it "does nothing to Var expressions" $ do
-      let a = Var "x" + (Var "y" + Var "z") in
-        combineConst Add a `shouldBe` a
-
-    it "does nothing to expressions with different ops (1)" $ do
-      let a = fromInteger 3 + (fromInteger 5 * fromInteger 9) in
-        combineConst Add a `shouldBe` a
-
-    it "does nothing to expressions with different ops (2)" $ do
-      let a = fromInteger 5 * fromInteger 9 in
-        combineConst Add a `shouldBe` a
-
-    it "does nothing to expressions with different ops (3)" $ do
-      let a = fromInteger 5 * (fromInteger 9 + fromInteger 2) in
-        combineConst Add a `shouldBe` a
-
-    it "does nothing to Const on the right" $ do
-      let a = fromInteger 5 * Var "x" in
-        combineConst Add a `shouldBe` a
-        
-    it "swaps Const to the left" $ do
-      combineConst Add (Var "x" + fromInteger 3) `shouldBe` (fromInteger 3 + Var "x")
-      
-    it "extracts consts from inner left" $ do
-      combineConst Add (Var "x" + (fromInteger 3 + Var "z")) 
-        `shouldBe` fromInteger 3 + (Var "x" + Var "z")
-
-    it "extracts consts from inner right" $ do
-      combineConst Add (Var "x" + (Var "z" + fromInteger 3)) 
-        `shouldBe` fromInteger 3 + (Var "x" + Var "z")
-    
-    it "extracts deeper consts" $ do
-      combineConst Add (Var "x" + (Var "z" + (Var "y" + fromInteger 3)))
-        `shouldBe` fromInteger 3 + (Var "x" + (Var "z" + Var "y"))
-    
-    it "combines 2-Const, 1-Var expressions (1)" $ do
-      combineConst Add (Var "x" + (fromInteger 1 + fromInteger 1))
-        `shouldBe` fromInteger 2 + Var "x"
-    
-    it "combines 2-Const, 1-Var expressions (2)" $ do
-      combineConst Add (fromInteger 1 + (Var "x" + fromInteger 1))
-        `shouldBe` fromInteger 2 + Var "x"
-    
-    it "combines 2-Const, 1-Var expressions (3)" $ do
-      combineConst Add (fromInteger 1 + (fromInteger 1 + Var "x"))
-        `shouldBe` fromInteger 2 + Var "x"
-    
-    it "combines 3-Const expressions" $ do
-      combineConst Add (fromInteger 5 + (fromInteger 2 + fromInteger 3))
-        `shouldBe` fromInteger 10
-
-    it "combines 4-Const expressions" $ do
-      combineConst Add (fromInteger 1 + (fromInteger 2 + (fromInteger 3 + (fromInteger 4))))
-        `shouldBe` fromInteger 10
-
-    it "combines 5-Const expressions" $ do
-      combineConst Add (fromInteger 1 + (fromInteger 2 + (fromInteger 3 + (fromInteger 4 + (fromInteger 5)))))
-        `shouldBe` fromInteger 15
-
-    it "reduces expressions with deeper constants (1)" $ do
-      combineConst Add (fromInteger 1 + (Var "x" + (fromInteger 2 + fromInteger 3)))
-        `shouldBe` fromInteger 6 + Var "x"
-
-    it "reduces expressions with deeper constants (2)" $ do
-      combineConst Add (fromInteger 1 + (Var "x" + (Var "y" + fromInteger 3)))
-        `shouldBe` fromInteger 4 + (Var "x" + Var "y")
-
   describe "expandInverse" $ do
-    it "does nothing to Const" $ do
-      expandInverse (Const 3) `shouldBe` Const 3
+    it "expands unary negation" $ do
+      expandInverse (-x) `shouldBe` ((exprc (-1)) * x)
+    it "expands subtraction" $ do
+      expandInverse (y - x) `shouldBe` y + ((exprc (-1)) * x)
+    it "expands division" $ do
+      expandInverse (y / x) `shouldBe` y + (B x Pow (exprc (-1)))
+    it "expands sqrt" $ do
+      expandInverse (U Sqrt x) `shouldBe` B x Pow (exprc (fromRational (1 % 2)))
 
-    it "does nothing to Var" $ do
-      expandInverse (Var "x") `shouldBe` Var "x"
+  describe "toSigma" $ do
+    it "sums multiple terms" $ do
+      toSigma (x + y + z) `shouldBe` S [x, y, z]
+    it "doesn't sum single terms" $ do
+      toSigma x `shouldBe` x
+    it "doesn't convert non-Add expressions" $ do
+      toSigma (x * y) `shouldBe` x * y
 
-    it "converts subtractions" $ do
-      expandInverse (fromInteger 5 - fromInteger 2) `shouldBe` fromInteger 5 + (fromInteger (-1) * fromInteger 2)
-
-    it "converts divisions" $ do
-      expandInverse (fromInteger 5 / fromInteger 2) `shouldBe` fromInteger 5 * (BExpr (fromInteger 2) Pow (fromInteger (-1)))
-
+  describe "toProd" $ do
+    it "multiply multiple terms" $ do
+      toProd (x * y * z) `shouldBe` P [x, y, z]
+    it "doesn't multiply single terms" $ do
+      toProd x `shouldBe` x
+    it "doesn't convert non-Mul expressions" $ do
+      toProd (x + y) `shouldBe` x + y
