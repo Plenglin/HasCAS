@@ -9,7 +9,13 @@ instance Show Atom where
   show (Const x) = show x
   show (Var v) = v
 
-data Expr = Id | A Atom | U UOp Expr | B Expr BOp Expr | S [Expr] | P [Expr] | Poly Expr [Expr] deriving Eq
+instance Ord Atom where
+  compare (Const a) (Const b) = compare a b
+  compare (Const _) x = LT
+  compare _ (Const _) = GT
+  compare (Var a) (Var b) = compare a b
+
+data Expr = A Atom | U UOp Expr | B Expr BOp Expr | S [Expr] | P [Expr] | Poly Expr [Expr] deriving (Eq)
 
 exprv :: String -> Expr
 exprv v = A (Var v)
@@ -46,13 +52,19 @@ instance Fractional Expr where
   (/) l = B l Div
   fromRational x = exprc (fromRational x)
 
+instance Ord Expr where
+  compare (A a) (A b) = compare a b
+  compare (U oa a) (U ob b)
+    | oa == ob = compare a b
+    | otherwise = compare oa ob
+
+  (<) (A _) _ = True
+
+
 exprOp :: BOp -> Expr -> Expr -> Expr
-exprOp op x Id = x
-exprOp op Id x = x
 exprOp op l r = B l op r
 
 exprUOp :: UOp -> Expr -> Expr
-exprUOp op Id = Id
 exprUOp op x = U op x
 
 fromReal :: Double -> Expr

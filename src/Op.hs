@@ -3,8 +3,8 @@ module Op where
 
 import Scalar
 
-data BOp = Add | Mul | Sub | Div | Pow deriving Eq
-data UOp = Neg | Sqrt | Abs | Sign | Log | Sin | Cos | Tan | Sec | Csc | Cot deriving (Show, Eq)
+data BOp = Add | Mul | Sub | Div | Pow deriving (Eq, Ord)
+data UOp = Neg | Sqrt | Abs | Sign | Log | Sin | Cos | Tan | Sec | Csc | Cot deriving (Show, Eq, Ord)
 
 instance Show BOp where
   show Add = "+"

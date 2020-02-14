@@ -9,6 +9,14 @@ instance Show Scalar where
   show (RaScl x) = show x
   show (ReScl x) = show x
 
+instance Ord Scalar where
+  compare (IScl a) (IScl b) = compare a b
+  compare (IScl a) (RaScl b) = compare (fromInteger a) b
+  compare (IScl a) (ReScl b) = compare (fromInteger a) b
+  compare (RaScl a) (RaScl b) = compare a b
+  compare (RaScl a) (ReScl b) = compare (fromRational a) b
+  compare (ReScl a) (ReScl b) = compare a b
+  compare a b = compare b a
 
 normalizeTypes :: Scalar -> Scalar -> (Scalar, Scalar)
 normalizeTypes (IScl l) (IScl r) = (IScl l, IScl r)
