@@ -2,6 +2,7 @@ import Test.Hspec
 import Test.QuickCheck
 import Control.Exception (evaluate)
 import Data.Ratio
+import qualified Data.Map as Map
 
 import Lib
 
@@ -67,4 +68,15 @@ main = hspec $ do
     it "always puts consts before vars" $ do
       compare (A (Const 3)) x `shouldBe` LT
       compare x (A (Const 2)) `shouldBe` GT
-    
+
+  describe "involvedVars" $ do
+    it "works on Var" $ do
+      involvedVars x `shouldBe` Map.singleton "x" 1
+      involvedVars y `shouldBe` Map.singleton "y" 1
+    it "is empty on Const" $ do
+      involvedVars (exprc 3) `shouldBe` Map.empty
+
+  describe "reformat" $
+    it "converts Add into Sigma, Mul into Prod" $ do
+      reformat ((x + y) * (x + y + z)) `shouldBe` P [S [x, y], S [x, y, z]]
+      reformat ((x + y) * (x + y * (w + x + y + z))) `shouldBe` P [S [x, y], S [x, P [y, S[w, x, y, z]]]]

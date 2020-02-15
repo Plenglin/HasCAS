@@ -1,6 +1,9 @@
 module TreeUtils where
 
 import Data.Ratio
+import Data.List
+import qualified Data.Map.Strict as Map
+import Data.Map.Merge.Strict (zipWithMatched)
 
 import Scalar
 import Op
@@ -35,12 +38,38 @@ toProd :: Expr -> Expr
 toProd (B a Mul b) = P (touching Mul (B a Mul b))
 toProd x = x
 
-reformat :: Expr -> Expr
-reformat (B a Add b) = S (map reformat as)
-  where (S as) = toSigma (B a Add b)
+isConst :: Expr -> Bool
+isConst (A (Const _)) = True
+isConst _ = False 
 
-reformat (B a Mul b) = P (map reformat as)
-  where (P as) = toSigma (B a Mul b)
+involvedVars :: Expr -> Map.Map String Int
+involvedVars x = go [x] Map.empty
+  where newVarInst :: Maybe Int -> Maybe Int
+        newVarInst (Just n) = Just (n + 1)
+        newVarInst Nothing = Just 1
+
+        go :: [Expr] -> Map.Map String Int -> Map.Map String Int
+        go [] acc = acc
+        go ((B a _ b):stack) acc = go (b:a:stack) acc
+        go ((S xs):stack) acc = go (xs ++ stack) acc
+        go ((A (Var v)):stack) acc = go stack (Map.alter newVarInst v acc)
+        go (_:stack) acc = go stack acc
+
+combineLikeTerms :: Expr -> Expr
+combineLikeTerms (S xs) = S (constSum : nonConst)
+  where (consts, nonConst) = partition isConst xs
+        addConst (A (Const a)) (A (Const b)) = A (Const (a + b))
+        constSum = foldl addConst 0 consts
+
+
+reformat :: Expr -> Expr
+reformat (B a Add b) = reformat (S (map reformat xs)) 
+  where (S xs) = toSigma (B a Add b)
+reformat (B a Mul b) = P (map reformat xs)
+  where (P xs) = toProd (B a Mul b)
+reformat (B a Sub b) = reformat (a + (neg1 * b))
+reformat (B a Div b) = reformat (a + (b ^^^ neg1))
+
 reformat (B a op b) = B (reformat a) op (reformat b)
 reformat (U op x) = U op (reformat x)
 reformat x = expandInverse x

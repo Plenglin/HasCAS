@@ -60,6 +60,8 @@ instance Ord Expr where
 
   (<) (A _) _ = True
 
+(^^^) :: Expr -> Expr -> Expr
+(^^^) a = B a Pow
 
 exprOp :: BOp -> Expr -> Expr -> Expr
 exprOp op l r = B l op r
