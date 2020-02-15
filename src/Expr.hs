@@ -3,6 +3,9 @@ module Expr where
 import Debug.Trace
 import Scalar
 import Op
+import qualified Data.Map as Map
+import qualified Data.Set as Set
+import Data.List
 
 data Atom = Const Scalar | Var String deriving Eq
 instance Show Atom where
@@ -18,7 +21,12 @@ instance Ord Atom where
   compare _ (Const _) = GT
   compare (Var a) (Var b) = compare a b
 
-data Expr = A Atom | U UOp Expr | B Expr BOp Expr | I BOp [Expr] | Poly Expr [Expr] deriving (Eq)
+data Monomial = Monomial Atom (Map.Map String Atom) deriving Eq
+instance Show Monomial where
+  show (Monomial a vs) = show a ++ (intercalate "" powers)
+    where powers = map (\(x, p) -> "(" ++ show x ++ "^" ++ show p ++ ")") (Map.assocs vs)
+
+data Expr = A Atom | U UOp Expr | B Expr BOp Expr | I BOp [Expr] | Poly Scalar (Set.Set Monomial) deriving (Eq)
 eS = I Add
 eP = I Mul
 
@@ -34,7 +42,7 @@ parenShow _ (U op x) = show op ++ "(" ++ show x ++ ")"
 parenShow False (I Add xs) = "Sigma " ++ show xs
 parenShow False (I Mul xs) = "Prod " ++ show xs
 parenShow False (I op xs) = show op ++ " " ++ show xs
-parenShow False (Poly x xs) = "Poly " ++ show x ++ " " ++ show xs
+parenShow False (Poly c mons) = "Poly " ++ show c ++ " + " ++ intercalate " + " (map show (Set.elems mons))
 
 parenShow True x = "(" ++ parenShow False x ++ ")"
 

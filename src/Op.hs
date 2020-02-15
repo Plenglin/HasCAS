@@ -16,6 +16,7 @@ instance Show BOp where
 identity :: BOp -> Scalar
 identity Add = 0
 identity Mul = 1
+identity Pow = 1
 
 repeated :: BOp -> BOp
 repeated Add = Mul

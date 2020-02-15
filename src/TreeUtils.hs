@@ -28,7 +28,6 @@ expandInverse (B a Sub b) = a + (neg1 * b)
 expandInverse (B a Div b) = a + B b Pow neg1
 expandInverse (U Neg x) = neg1 * x
 expandInverse (U Sqrt x) = B x Pow (fromRational (1 % 2))
-expandInverse (B a op b) = B (expandInverse a) op (expandInverse b)
 expandInverse x = x
 
 groupIBO :: Expr -> Expr
@@ -104,13 +103,21 @@ combineLikeTerms (I op exprs) =
 
 combineLikeTerms x = x
 
-distribute :: Expr -> Expr
-distribute (B (I Add xs) Mul a) = I Add (map (*a) xs)
-distribute (B (I Mul xs) Pow a) = I Add (map (^^^a) xs)
-distribute x = x
-
 expandPolynomial :: Expr -> Expr
-expandPolynomial (B a op b) 
+expandPolynomial (B (I Add xs) Mul (A a)) = combineLikeTerms (I Add (map (*A a) xs))
+expandPolynomial (B (I Mul xs) Pow (A a)) = combineLikeTerms (I Add (map (^^^A a) xs))
+expandPolynomial (B (A a) op (I op2 xs)) = expandPolynomial (B (I op2 xs) op (A a))
+
+{-expandPolynomial (B (I Add as) Mul (I Add bs)) = 
+  where 
+    (I Add as') = expandPolynomial (I Add as)
+    (I Add bs') = expandPolynomial (I Add bs)
+    products = map (\a -> expandPolynomial (bs'*)) as'
+-}
+
+expandPolynomial (B a op b)
   | op == Add || op == Mul = expandPolynomial (groupIBO (B a op b))
-expandPolynomial (I Add xs) = combineLikeTerms (I Add (map expandPolynomial xs))
+  | op == Pow = B (expandPolynomial a) op b
+  | otherwise = expandPolynomial (expandInverse (B a op b))
+expandPolynomial (I op xs) = combineLikeTerms (I op (map expandPolynomial xs))
 expandPolynomial x = x

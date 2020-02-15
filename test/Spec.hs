@@ -93,3 +93,5 @@ main = hspec $ do
       combineLikeTerms (I Add [y, x, x]) `shouldBe` I Add [x * exprc 2, y]
       combineLikeTerms (I Add [z, y, x]) `shouldBe` I Add [x, y, z]
       combineLikeTerms (I Add [x, y, z]) `shouldBe` I Add [x, y, z]
+    it "combines constants and vars with powers" $ do
+      combineLikeTerms (I Mul [y, 3, x ^^^ exprc (-3), 5, y, x ^^^ exprc 22]) `shouldBe` I Mul [15, x ^^^ exprc 19, y ^^^ 2]
