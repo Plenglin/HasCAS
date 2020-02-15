@@ -41,13 +41,10 @@ main = hspec $ do
 
   describe "groupIBO" $ do
     it "groups multiple terms" $ do
-      groupIBO Add (x + y + z) `shouldBe` I Add [x, y, z]
-      groupIBO Mul (x * y * z) `shouldBe` I Mul [x, y, z]
+      groupIBO (x + y + z) `shouldBe` I Add [x, y, z]
+      groupIBO (x * y * z) `shouldBe` I Mul [x, y, z]
     it "doesn't group single terms" $
-      groupIBO Add x `shouldBe` x
-    it "doesn't group non-op expressions" $ do
-      groupIBO Add (x * y) `shouldBe` x * y
-      groupIBO Mul (x + y) `shouldBe` x + y
+      groupIBO x `shouldBe` x
 
   describe "Expr ordering" $ do
     it "compares consts by their contents" $ do

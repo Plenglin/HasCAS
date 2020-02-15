@@ -31,10 +31,9 @@ expandInverse (U Sqrt x) = B x Pow (fromRational (1 % 2))
 expandInverse (B a op b) = B (expandInverse a) op (expandInverse b)
 expandInverse x = x
 
-groupIBO :: BOp -> Expr -> Expr
-groupIBO op (B a op2 b)
-  | op == op2 = I op (touching op (B a op b))
-groupIBO op x = x
+groupIBO :: Expr -> Expr
+groupIBO (B a op b) = I op (touching op (B a op b))
+groupIBO x = x
 
 ungroupIBO :: Expr -> Expr
 ungroupIBO (I Mul [A (Const k), A (Var x)]) = exprv x * exprc k
@@ -65,8 +64,8 @@ recombineVarCoeff op x k
   | otherwise = B (exprv x) op (exprc k)
 
 combineLikeTerms :: Expr -> Expr
-combineLikeTerms (I op exprs) = 
-  if constSumScl == identity op 
+combineLikeTerms (I op exprs) =
+  if constSumScl == identity op
     then I op nonConstSum
     else I op (constSum : nonConstSum)
   where
@@ -92,11 +91,11 @@ combineLikeTerms (I op exprs) =
 
     separateVars :: Map.Map String Scalar -> [Expr] -> [Expr] -> (Map.Map String Scalar, [Expr])
     separateVars varsMap nonVars [] = (varsMap, nonVars)
-    separateVars varsMap nonVars (expr:rest) = 
+    separateVars varsMap nonVars (expr:rest) =
       case formatCoeff op expr of
-        Just (B (A (Var x)) op (A (Const k))) -> 
+        Just (B (A (Var x)) op (A (Const k))) ->
           separateVars (Map.alter (newVarCoeff k) x varsMap) nonVars rest
-        _ -> 
+        _ ->
           separateVars varsMap (expr:nonVars) rest
 
     (varsMap, nonVars) = separateVars Map.empty [] nonConst
@@ -105,13 +104,13 @@ combineLikeTerms (I op exprs) =
 
 combineLikeTerms x = x
 
-reformat :: Expr -> Expr
-reformat (B a op b)
-  | (op == Add) || (op == Mul) = reformat (I op (map reformat xs))
-      where (I _ xs) = groupIBO op (B a op b)
-reformat (B a Sub b) = reformat (a + (neg1 * b))
-reformat (B a Div b) = reformat (a + (b ^^^ neg1))
+distribute :: Expr -> Expr
+distribute (B (I Add xs) Mul a) = I Add (map (*a) xs)
+distribute (B (I Mul xs) Pow a) = I Add (map (^^^a) xs)
+distribute x = x
 
-reformat (B a op b) = B (reformat a) op (reformat b)
-reformat (U op x) = U op (reformat x)
-reformat x = expandInverse x
+expandPolynomial :: Expr -> Expr
+expandPolynomial (B a op b) 
+  | op == Add || op == Mul = expandPolynomial (groupIBO (B a op b))
+expandPolynomial (I Add xs) = combineLikeTerms (I Add (map expandPolynomial xs))
+expandPolynomial x = x
