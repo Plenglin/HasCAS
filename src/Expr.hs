@@ -6,7 +6,10 @@ import Op
 
 data Atom = Const Scalar | Var String deriving Eq
 instance Show Atom where
-  show (Const x) = show x
+  show (Const x) =
+    if x < 0
+      then "(" ++ show x ++ ")"
+      else show x
   show (Var v) = v
 
 instance Ord Atom where
@@ -15,7 +18,9 @@ instance Ord Atom where
   compare _ (Const _) = GT
   compare (Var a) (Var b) = compare a b
 
-data Expr = A Atom | U UOp Expr | B Expr BOp Expr | S [Expr] | P [Expr] | Poly Expr [Expr] deriving (Eq)
+data Expr = A Atom | U UOp Expr | B Expr BOp Expr | I BOp [Expr] | Poly Expr [Expr] deriving (Eq)
+eS = I Add
+eP = I Mul
 
 exprv :: String -> Expr
 exprv v = A (Var v)
@@ -26,8 +31,9 @@ exprc x = A (Const x)
 parenShow :: Bool -> Expr -> String
 parenShow _ (A a) = show a
 parenShow _ (U op x) = show op ++ "(" ++ show x ++ ")"
-parenShow False (S xs) = "Sigma " ++ show xs
-parenShow False (P xs) = "Prod " ++ show xs
+parenShow False (I Add xs) = "Sigma " ++ show xs
+parenShow False (I Mul xs) = "Prod " ++ show xs
+parenShow False (I op xs) = show op ++ " " ++ show xs
 parenShow False (Poly x xs) = "Poly " ++ show x ++ " " ++ show xs
 
 parenShow True x = "(" ++ parenShow False x ++ ")"

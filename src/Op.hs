@@ -17,6 +17,10 @@ identity :: BOp -> Scalar
 identity Add = 0
 identity Mul = 1
 
+repeated :: BOp -> BOp
+repeated Add = Mul
+repeated Mul = Pow
+
 scalarOp :: BOp -> Scalar -> Scalar -> Scalar
 scalarOp Add = (+)
 scalarOp Mul = (*)

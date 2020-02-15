@@ -39,21 +39,15 @@ main = hspec $ do
     it "expands sqrt" $
       expandInverse (U Sqrt x) `shouldBe` B x Pow (exprc (fromRational (1 % 2)))
 
-  describe "toSigma" $ do
-    it "groups multiple terms" $ 
-      toSigma (x + y + z) `shouldBe` S [x, y, z]
-    it "doesn't sum single terms" $
-      toSigma x `shouldBe` x
-    it "doesn't convert non-Add expressions" $ 
-      toSigma (x * y) `shouldBe` x * y
-
-  describe "toProd" $ do
-    it "groups multiple terms" $ 
-      toProd (x * y * z) `shouldBe` P [x, y, z]
-    it "doesn't multiply single terms" $ 
-      toProd x `shouldBe` x
-    it "doesn't convert non-Mul expressions" $ 
-      toProd (x + y) `shouldBe` x + y
+  describe "groupIBO" $ do
+    it "groups multiple terms" $ do
+      groupIBO Add (x + y + z) `shouldBe` I Add [x, y, z]
+      groupIBO Mul (x * y * z) `shouldBe` I Mul [x, y, z]
+    it "doesn't group single terms" $
+      groupIBO Add x `shouldBe` x
+    it "doesn't group non-op expressions" $ do
+      groupIBO Add (x * y) `shouldBe` x * y
+      groupIBO Mul (x + y) `shouldBe` x + y
 
   describe "Expr ordering" $ do
     it "compares consts by their contents" $ do
@@ -69,14 +63,36 @@ main = hspec $ do
       compare (A (Const 3)) x `shouldBe` LT
       compare x (A (Const 2)) `shouldBe` GT
 
-  describe "involvedVars" $ do
+  describe "countVars" $ do
     it "works on Var" $ do
-      involvedVars x `shouldBe` Map.singleton "x" 1
-      involvedVars y `shouldBe` Map.singleton "y" 1
-    it "is empty on Const" $ do
-      involvedVars (exprc 3) `shouldBe` Map.empty
+      countVars x `shouldBe` Map.singleton "x" 1
+      countVars y `shouldBe` Map.singleton "y" 1
+    it "is empty on Const" $
+      countVars (exprc 3) `shouldBe` Map.empty
+    it "works on sums" $
+      countVars (eS [x, 1, 3]) `shouldBe` Map.singleton "x" 1
+    it "works on nested" $
+      countVars (eS [(x - x) + (y + (z + w)), 1, 3]) 
+        `shouldBe` Map.fromAscList [("w", 1), ("x", 2), ("y", 1), ("z", 1)]
 
-  describe "reformat" $
-    it "converts Add into Sigma, Mul into Prod" $ do
-      reformat ((x + y) * (x + y + z)) `shouldBe` P [S [x, y], S [x, y, z]]
-      reformat ((x + y) * (x + y * (w + x + y + z))) `shouldBe` P [S [x, y], S [x, P [y, S[w, x, y, z]]]]
+  --describe "reformat" $
+  --  it "converts Add into Sigma, Mul into Prod" $ do
+  --    reformat ((x + y) * (x + y + z)) `shouldBe` eP [eS [x, y], eS [x, y, z]]
+  --    reformat ((x + y) * (x + y * (w + x + y + z))) `shouldBe` eP [eS [x, y], eS [x, eP [y, eS[w, x, y, z]]]]
+
+  describe "combineLikeTerms" $ do
+    it "combines constants" $ do
+      combineLikeTerms (I Add [3, 5, 7]) `shouldBe` I Add [exprc (3 + 5 + 7)]
+      combineLikeTerms (I Mul [5, 9, 2]) `shouldBe` I Mul [exprc (5 * 9 * 2)]
+      combineLikeTerms (I Add [5]) `shouldBe` I Add [exprc 5]
+    it "combines vars" $ do
+      combineLikeTerms (I Add [x, x, x]) `shouldBe` I Add [x * exprc 3]
+      combineLikeTerms (I Add [x, 3 * x, x * 5]) `shouldBe` I Add [x * exprc 9]
+      combineLikeTerms (I Add [y, x * 2, x * 93, y * exprc (-93)]) `shouldBe` I Add [x * exprc 95, y * exprc (-92)]
+      combineLikeTerms (I Add [x, y, z]) `shouldBe` I Add [x, y, z]
+      combineLikeTerms (I Add [z, y, x * 3]) `shouldBe` I Add [x * 3, y, z]
+    it "combines constants and vars" $ do
+      combineLikeTerms (I Add [x, 3, x * exprc (-3), 5, x]) `shouldBe` I Add [8, x * exprc (-1)]
+      combineLikeTerms (I Add [y, x, x]) `shouldBe` I Add [x * exprc 2, y]
+      combineLikeTerms (I Add [z, y, x]) `shouldBe` I Add [x, y, z]
+      combineLikeTerms (I Add [x, y, z]) `shouldBe` I Add [x, y, z]

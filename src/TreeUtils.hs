@@ -4,6 +4,7 @@ import Data.Ratio
 import Data.List
 import qualified Data.Map.Strict as Map
 import Data.Map.Merge.Strict (zipWithMatched)
+import Debug.Trace (trace)
 
 import Scalar
 import Op
@@ -30,20 +31,23 @@ expandInverse (U Sqrt x) = B x Pow (fromRational (1 % 2))
 expandInverse (B a op b) = B (expandInverse a) op (expandInverse b)
 expandInverse x = x
 
-toSigma :: Expr -> Expr
-toSigma (B a Add b) = S (touching Add (B a Add b))
-toSigma x = x
+groupIBO :: BOp -> Expr -> Expr
+groupIBO op (B a op2 b)
+  | op == op2 = I op (touching op (B a op b))
+groupIBO op x = x
 
-toProd :: Expr -> Expr
-toProd (B a Mul b) = P (touching Mul (B a Mul b))
-toProd x = x
+ungroupIBO :: Expr -> Expr
+ungroupIBO (I Mul [A (Const k), A (Var x)]) = exprv x * exprc k
+ungroupIBO (I op [a]) = a
+ungroupIBO (I op [a, b]) = B a op b
+ungroupIBO (I op (x:xs)) = B x op (I op xs)
 
 isConst :: Expr -> Bool
 isConst (A (Const _)) = True
-isConst _ = False 
+isConst _ = False
 
-involvedVars :: Expr -> Map.Map String Int
-involvedVars x = go [x] Map.empty
+countVars :: Expr -> Map.Map String Int
+countVars x = go [x] Map.empty
   where newVarInst :: Maybe Int -> Maybe Int
         newVarInst (Just n) = Just (n + 1)
         newVarInst Nothing = Just 1
@@ -51,22 +55,60 @@ involvedVars x = go [x] Map.empty
         go :: [Expr] -> Map.Map String Int -> Map.Map String Int
         go [] acc = acc
         go ((B a _ b):stack) acc = go (b:a:stack) acc
-        go ((S xs):stack) acc = go (xs ++ stack) acc
+        go ((I _ xs):stack) acc = go (xs ++ stack) acc
         go ((A (Var v)):stack) acc = go stack (Map.alter newVarInst v acc)
         go (_:stack) acc = go stack acc
 
-combineLikeTerms :: Expr -> Expr
-combineLikeTerms (S xs) = S (constSum : nonConst)
-  where (consts, nonConst) = partition isConst xs
-        addConst (A (Const a)) (A (Const b)) = A (Const (a + b))
-        constSum = foldl addConst 0 consts
+recombineVarCoeff :: BOp -> String -> Scalar -> Expr
+recombineVarCoeff op x k
+  | identity op == k = exprv x
+  | otherwise = B (exprv x) op (exprc k)
 
+combineLikeTerms :: Expr -> Expr
+combineLikeTerms (I op exprs) = 
+  if constSumScl == identity op 
+    then I op nonConstSum
+    else I op (constSum : nonConstSum)
+  where
+    f = scalarOp op
+    ro = repeated op
+    i = identity op
+
+    (consts, nonConst) = partition isConst exprs
+    combine (A (Const a)) (A (Const b)) = exprc (f a b)
+    constSum = foldl combine (exprc i) consts
+    A (Const constSumScl) = constSum
+
+    formatCoeff Add (B (A (Const k)) Mul (A (Var x))) = Just (exprv x * exprc k)
+    formatCoeff Add (A (Var x)) = Just (exprv x * exprc 1)
+    formatCoeff Add (I Mul xs) = Just (ungroupIBO (I Mul xs))
+    formatCoeff Mul (A (Var x)) = Just (exprv x ^^^ exprc 1)
+    formatCoeff op (B a ro b) = Just (B a ro b)
+    formatCoeff _ x = Nothing
+
+    newVarCoeff :: Scalar -> Maybe Scalar -> Maybe Scalar
+    newVarCoeff k (Just k1) = Just (k + k1)
+    newVarCoeff k Nothing = Just k
+
+    separateVars :: Map.Map String Scalar -> [Expr] -> [Expr] -> (Map.Map String Scalar, [Expr])
+    separateVars varsMap nonVars [] = (varsMap, nonVars)
+    separateVars varsMap nonVars (expr:rest) = 
+      case formatCoeff op expr of
+        Just (B (A (Var x)) op (A (Const k))) -> 
+          separateVars (Map.alter (newVarCoeff k) x varsMap) nonVars rest
+        _ -> 
+          separateVars varsMap (expr:nonVars) rest
+
+    (varsMap, nonVars) = separateVars Map.empty [] nonConst
+    vars = map (uncurry (recombineVarCoeff ro)) (Map.assocs varsMap)
+    nonConstSum = vars ++ nonVars
+
+combineLikeTerms x = x
 
 reformat :: Expr -> Expr
-reformat (B a Add b) = reformat (S (map reformat xs)) 
-  where (S xs) = toSigma (B a Add b)
-reformat (B a Mul b) = P (map reformat xs)
-  where (P xs) = toProd (B a Mul b)
+reformat (B a op b)
+  | (op == Add) || (op == Mul) = reformat (I op (map reformat xs))
+      where (I _ xs) = groupIBO op (B a op b)
 reformat (B a Sub b) = reformat (a + (neg1 * b))
 reformat (B a Div b) = reformat (a + (b ^^^ neg1))
 
