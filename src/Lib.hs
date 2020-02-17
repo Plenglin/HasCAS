@@ -3,13 +3,11 @@ module Lib(
   module Scalar,
   module TreeUtils,
   module Op,
-  --module Expand,
-  --module Simplify
+  module Polynomial
 ) where
 
 import Expr
 import Scalar
 import TreeUtils
 import Op
---import Expand
---import Simplify
+import Polynomial
