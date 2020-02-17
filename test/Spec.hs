@@ -31,11 +31,11 @@ main = hspec $ do
 
   describe "expandInverse" $ do
     it "expands unary negation" $
-      expandInverse (-x) `shouldBe` ((exprc (-1)) * x)
+      expandInverse (-x) `shouldBe` (x * neg1)
     it "expands subtraction" $
-      expandInverse (y - x) `shouldBe` y + ((exprc (-1)) * x)
+      expandInverse (y - x) `shouldBe` y + (x * neg1)
     it "expands division" $
-      expandInverse (y / x) `shouldBe` y + (B x Pow (exprc (-1)))
+      expandInverse (y / x) `shouldBe` y + (x ^^^ neg1)
     it "expands sqrt" $
       expandInverse (U Sqrt x) `shouldBe` B x Pow (exprc (fromRational (1 % 2)))
 

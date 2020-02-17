@@ -20,9 +20,6 @@ touching op x = go op [x] []
         go op (x:stack) found = go op stack (x:found)
         go op [] found = found
 
-neg1 :: Expr
-neg1 = exprc (-1)
-
 -- | Takes in any kind of raw expression. Converts all the Sub, Div, Neg, Sqrt into 
 expandInverse :: Expr -> Expr
 expandInverse (B a Sub b) = expandInverse a + (expandInverse b * neg1)

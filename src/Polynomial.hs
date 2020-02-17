@@ -15,27 +15,27 @@ pruneMonomial (Monomial m) = Monomial (Map.filter (==0) m)
 
 -- | Assumes that the given polynomials have been simplified.
 addPolynomials :: Expr -> Expr -> Expr
-addPolynomials (Poly ac ams) (Poly bc bms) = Poly (ac + bc) unioned
+addPolynomials (Poly ams) (Poly bms) = Poly unioned
   where unioned = Map.unionWith (+) ams bms
 
 sclPolynomial :: Scalar -> Expr -> Expr
-sclPolynomial a (Poly c xs) = Poly (a * c) (Map.map (*a) xs)
+sclPolynomial a (Poly xs) = Poly (Map.map (*a) xs)
 
 mulMonomials :: Monomial -> Monomial -> Monomial
 mulMonomials (Monomial m1) (Monomial m2) = Monomial unioned
   where unioned = Map.unionWith (+) m1 m2
 
 mulMonomialPolynomial :: Monomial -> Expr -> Expr
-mulMonomialPolynomial (Monomial m) (Poly c xs)  
-  | null m = Poly c xs
-  | otherwise = Poly 0 (Map.fromAscList terms')
+mulMonomialPolynomial (Monomial m) (Poly xs)  
+  | null m = Poly xs
+  | otherwise = Poly (Map.fromAscList terms')
       where terms = Map.assocs xs
             terms' = [(mulMonomials (Monomial m) m2, p) | (m2, p) <- terms]
 
 -- | Assumes that the given polynomials have been simplified.
 mulPolynomials :: Expr -> Expr -> Expr
-mulPolynomials (Poly ac ams) (Poly bc bms) = sum
-  where products = [sclPolynomial aa (mulMonomialPolynomial am (Poly bc bms)) | (am, aa) <- Map.assocs ams]
+mulPolynomials (Poly ams) (Poly bms) = sum
+  where products = [sclPolynomial aa (mulMonomialPolynomial am (Poly bms)) | (am, aa) <- Map.assocs ams]
         sum = foldl addPolynomials zeroPoly products
 
 expandPolynomial :: Expr -> Expr

@@ -26,9 +26,9 @@ data Monomial = Monomial (Map.Map String Expr) deriving (Eq, Ord)
 instance Show Monomial where
   show (Monomial vs) = concatMap (\(x, p) -> "(" ++ show x ++ "^" ++ show p ++ ")") (Map.assocs vs)
 
-oneMonomial = Monomial Map.empty 
+oneMono = Monomial Map.empty 
 
-data Expr = A Atom | U UOp Expr | B Expr BOp Expr | I BOp [Expr] | Poly Scalar (Map.Map Monomial Scalar) deriving (Eq)
+data Expr = A Atom | U UOp Expr | B Expr BOp Expr | I BOp [Expr] | Poly (Map.Map Monomial Scalar) deriving (Eq)
 eS = I Add
 eP = I Mul
 
@@ -38,7 +38,11 @@ exprv v = A (Var v)
 exprc :: Scalar -> Expr
 exprc x = A (Const x)
 
-zeroPoly = Poly 0 Map.empty 
+neg1 :: Expr
+neg1 = exprc (-1)
+
+zeroPoly :: Expr
+zeroPoly = Poly Map.empty 
 
 parenShow :: Bool -> Expr -> String
 parenShow _ (A a) = show a
@@ -46,7 +50,7 @@ parenShow _ (U op x) = show op ++ "(" ++ show x ++ ")"
 parenShow False (I Add xs) = "Sigma " ++ show xs
 parenShow False (I Mul xs) = "Prod " ++ show xs
 parenShow False (I op xs) = show op ++ " " ++ show xs
-parenShow False (Poly c mons) = "Poly " ++ show c ++ " + " ++ intercalate " + " (map show (Map.assocs mons))
+parenShow False (Poly mons) = "Poly " ++ intercalate " + " (map show (Map.assocs mons))
 
 parenShow True x = "(" ++ parenShow False x ++ ")"
 
