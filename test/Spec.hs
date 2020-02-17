@@ -95,3 +95,15 @@ main = hspec $ do
       combineLikeTerms (I Add [x, y, z]) `shouldBe` I Add [x, y, z]
     it "combines constants and vars with powers" $ do
       combineLikeTerms (I Mul [y, 3, x ^^^ exprc (-3), 5, y, x ^^^ exprc 22]) `shouldBe` I Mul [15, x ^^^ exprc 19, y ^^^ 2]
+      combineLikeTerms (I Mul [x ^^^ exprc (-3), x ^^^ exprc 66]) `shouldBe` I Mul [x ^^^ exprc 63]
+
+  describe "liftAssociative" $ do 
+    it "lifts nested I Adds" $ do
+      liftAssociative (I Add [w, x, I Add [y, z]]) `shouldBe` I Add [w, x, y, z]
+      liftAssociative (I Add [w, x, I Add [y, I Add [z, w]]]) `shouldBe` I Add [w, x, y, z, w]
+    it "lifts nested Adds of any type" $ do
+      liftAssociative (I Add [w, x, y + z]) `shouldBe` I Add [w, x, y, z]
+      liftAssociative (I Add [w, x, y + (x + x)]) `shouldBe` I Add [w, x, y, x, x]
+    it "doesn't combine Adds with Muls" $ do
+      liftAssociative (I Add [w, x, y * z]) `shouldBe` I Add [w, x, I Mul [y, z]]
+      liftAssociative (I Add [w, x, y * (z + (y * w) + x)]) `shouldBe` I Add [w, x, I Mul [y, I Add [z, I Mul [y, w], x]]]

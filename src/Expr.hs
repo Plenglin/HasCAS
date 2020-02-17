@@ -21,12 +21,14 @@ instance Ord Atom where
   compare _ (Const _) = GT
   compare (Var a) (Var b) = compare a b
 
-data Monomial = Monomial Atom (Map.Map String Atom) deriving Eq
+-- | A monomial with an empty map represents the value 1.
+data Monomial = Monomial (Map.Map String Expr) deriving (Eq, Ord)
 instance Show Monomial where
-  show (Monomial a vs) = show a ++ (intercalate "" powers)
-    where powers = map (\(x, p) -> "(" ++ show x ++ "^" ++ show p ++ ")") (Map.assocs vs)
+  show (Monomial vs) = concatMap (\(x, p) -> "(" ++ show x ++ "^" ++ show p ++ ")") (Map.assocs vs)
 
-data Expr = A Atom | U UOp Expr | B Expr BOp Expr | I BOp [Expr] | Poly Scalar (Set.Set Monomial) deriving (Eq)
+oneMonomial = Monomial Map.empty 
+
+data Expr = A Atom | U UOp Expr | B Expr BOp Expr | I BOp [Expr] | Poly Scalar (Map.Map Monomial Scalar) deriving (Eq)
 eS = I Add
 eP = I Mul
 
@@ -36,17 +38,19 @@ exprv v = A (Var v)
 exprc :: Scalar -> Expr
 exprc x = A (Const x)
 
+zeroPoly = Poly 0 Map.empty 
+
 parenShow :: Bool -> Expr -> String
 parenShow _ (A a) = show a
 parenShow _ (U op x) = show op ++ "(" ++ show x ++ ")"
 parenShow False (I Add xs) = "Sigma " ++ show xs
 parenShow False (I Mul xs) = "Prod " ++ show xs
 parenShow False (I op xs) = show op ++ " " ++ show xs
-parenShow False (Poly c mons) = "Poly " ++ show c ++ " + " ++ intercalate " + " (map show (Set.elems mons))
+parenShow False (Poly c mons) = "Poly " ++ show c ++ " + " ++ intercalate " + " (map show (Map.assocs mons))
 
 parenShow True x = "(" ++ parenShow False x ++ ")"
 
-parenShow False (B l op r) = 
+parenShow False (B l op r) =
   parenShow True l ++ " " ++ show op ++ " " ++ parenShow True r
 
 instance Show Expr where

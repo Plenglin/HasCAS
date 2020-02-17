@@ -3,7 +3,7 @@ module TreeUtils where
 import Data.Ratio
 import Data.List
 import qualified Data.Map.Strict as Map
-import Data.Map.Merge.Strict (zipWithMatched)
+import qualified Data.Set as Set
 import Debug.Trace (trace)
 
 import Scalar
@@ -23,11 +23,14 @@ touching op x = go op [x] []
 neg1 :: Expr
 neg1 = exprc (-1)
 
+-- | Takes in any kind of raw expression. Converts all the Sub, Div, Neg, Sqrt into 
 expandInverse :: Expr -> Expr
-expandInverse (B a Sub b) = a + (neg1 * b)
-expandInverse (B a Div b) = a + B b Pow neg1
-expandInverse (U Neg x) = neg1 * x
-expandInverse (U Sqrt x) = B x Pow (fromRational (1 % 2))
+expandInverse (B a Sub b) = expandInverse a + (expandInverse b * neg1)
+expandInverse (B a Div b) = expandInverse a + B (expandInverse b * neg1) Pow neg1
+expandInverse (U Neg x) = expandInverse x * neg1
+expandInverse (U Sqrt x) = B (expandInverse x) Pow (fromRational (1 % 2))
+expandInverse (B a op b) = B (expandInverse a) op (expandInverse b)
+expandInverse (U op x) = U op (expandInverse x)
 expandInverse x = x
 
 groupIBO :: Expr -> Expr
@@ -61,6 +64,57 @@ recombineVarCoeff :: BOp -> String -> Scalar -> Expr
 recombineVarCoeff op x k
   | identity op == k = exprv x
   | otherwise = B (exprv x) op (exprc k)
+
+liftAssociative :: Expr -> Expr
+liftAssociative (I op xs) = I op xs'
+  where lifted = map liftAssociative xs
+        doFold (I op2 ys) xs
+          | op == op2 = ys ++ xs
+        doFold y xs = y:xs
+        xs' = foldr doFold [] lifted
+
+liftAssociative (B a Add b) = liftAssociative (groupIBO (B a Add b))
+liftAssociative (B a Mul b) = liftAssociative (groupIBO (B a Mul b))
+liftAssociative x = x
+
+-- | Removes zero powers from the monomial.
+pruneMonomial :: Monomial -> Monomial
+pruneMonomial (Monomial m) = Monomial (Map.filter (==0) m)
+
+-- | Moves 1-Monomials into the constant term.
+
+-- | Assumes that the given polynomials have been simplified.
+addPolynomials :: Expr -> Expr -> Expr
+addPolynomials (Poly ac ams) (Poly bc bms) = Poly (ac + bc) unioned
+  where unioned = Map.unionWith (+) ams bms
+
+sclPolynomial :: Scalar -> Expr -> Expr
+sclPolynomial a (Poly c xs) = Poly (a * c) (Map.map (*a) xs)
+
+mulMonomials :: Monomial -> Monomial -> Monomial
+mulMonomials (Monomial m1) (Monomial m2) = Monomial unioned
+  where unioned = Map.unionWith (+) m1 m2
+
+mulMonomialPolynomial :: Monomial -> Expr -> Expr
+mulMonomialPolynomial (Monomial m) (Poly c xs)  
+  | null m = Poly c xs
+  | otherwise = Poly 0 (Map.fromAscList terms')
+      where terms = Map.assocs xs
+            terms' = [(mulMonomials (Monomial m) m2, p) | (m2, p) <- terms]
+
+-- | Assumes that the given polynomials have been simplified.
+mulPolynomials :: Expr -> Expr -> Expr
+mulPolynomials (Poly ac ams) (Poly bc bms) = sum
+  where products = [sclPolynomial aa (mulMonomialPolynomial am (Poly bc bms)) | (am, aa) <- Map.assocs ams]
+        sum = foldl addPolynomials zeroPoly products
+
+expandPolynomial :: Expr -> Expr
+expandPolynomial (B a Add b) = expandPolynomial (liftAssociative (B a Add b))
+expandPolynomial (B a Mul b) = expandPolynomial (liftAssociative (B a Mul b))
+expandPolynomial (I Add xs) = foldl addPolynomials polys
+  where polys = map expandPolynomial xs
+expandPolynomial (I Mul xs) = foldl mulPolynomials polys
+  where polys = map expandPolynomial xs
 
 combineLikeTerms :: Expr -> Expr
 combineLikeTerms (I op exprs) =
@@ -103,21 +157,3 @@ combineLikeTerms (I op exprs) =
 
 combineLikeTerms x = x
 
-expandPolynomial :: Expr -> Expr
-expandPolynomial (B (I Add xs) Mul (A a)) = combineLikeTerms (I Add (map (*A a) xs))
-expandPolynomial (B (I Mul xs) Pow (A a)) = combineLikeTerms (I Add (map (^^^A a) xs))
-expandPolynomial (B (A a) op (I op2 xs)) = expandPolynomial (B (I op2 xs) op (A a))
-
-{-expandPolynomial (B (I Add as) Mul (I Add bs)) = 
-  where 
-    (I Add as') = expandPolynomial (I Add as)
-    (I Add bs') = expandPolynomial (I Add bs)
-    products = map (\a -> expandPolynomial (bs'*)) as'
--}
-
-expandPolynomial (B a op b)
-  | op == Add || op == Mul = expandPolynomial (groupIBO (B a op b))
-  | op == Pow = B (expandPolynomial a) op b
-  | otherwise = expandPolynomial (expandInverse (B a op b))
-expandPolynomial (I op xs) = combineLikeTerms (I op (map expandPolynomial xs))
-expandPolynomial x = x
