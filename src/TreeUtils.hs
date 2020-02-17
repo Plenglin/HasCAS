@@ -23,7 +23,7 @@ touching op x = go op [x] []
 -- | Takes in any kind of raw expression. Converts all the Sub, Div, Neg, Sqrt into 
 expandInverse :: Expr -> Expr
 expandInverse (B a Sub b) = expandInverse a + (expandInverse b * neg1)
-expandInverse (B a Div b) = expandInverse a + B (expandInverse b * neg1) Pow neg1
+expandInverse (B a Div b) = expandInverse a + B (expandInverse b) Pow neg1
 expandInverse (U Neg x) = expandInverse x * neg1
 expandInverse (U Sqrt x) = B (expandInverse x) Pow (fromRational (1 % 2))
 expandInverse (B a op b) = B (expandInverse a) op (expandInverse b)
