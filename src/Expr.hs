@@ -53,6 +53,9 @@ singlePoly m a = poly [(m, a)]
 zeroPoly :: Expr
 zeroPoly = Poly Map.empty 
 
+onePoly :: Expr
+onePoly = poly [(oneMono, 1)]
+
 parenShow :: Bool -> Expr -> String
 parenShow _ (A a) = show a
 parenShow _ (U op x) = show op ++ "(" ++ show x ++ ")"

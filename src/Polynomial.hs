@@ -1,5 +1,6 @@
 module Polynomial where
 
+import Data.Bits
 import qualified Data.Map as Map
     
 import Expr
@@ -10,6 +11,10 @@ import TreeUtils
 -- | Removes zero powers from the monomial.
 pruneMonomial :: Monomial -> Monomial
 pruneMonomial (Monomial m) = Monomial (Map.filter (/=0) m)
+
+-- | Removes zero terms from the polynomial
+prunePolynomial :: Expr -> Expr
+prunePolynomial (Poly xs) = Poly (Map.filter (/=0) xs)
 
 -- | Assumes that the given polynomials have been simplified.
 addPolynomials :: Expr -> Expr -> Expr
@@ -31,20 +36,38 @@ mulMonomials (Monomial m1) (Monomial m2) = pruneMonomial (Monomial unioned)
 mulMonomialPolynomial :: Monomial -> Expr -> Expr
 mulMonomialPolynomial (Monomial m) (Poly xs)  
   | null m = Poly xs
-  | otherwise = Poly (Map.fromAscList terms')
+  | otherwise = prunePolynomial (Poly (Map.fromAscList terms'))
       where terms = Map.assocs xs
             terms' = [(mulMonomials (Monomial m) m2, p) | (m2, p) <- terms]
 
 -- | Returns the product of two polynomials, assuming that the given polynomials have been simplified.
 mulPolynomials :: Expr -> Expr -> Expr
-mulPolynomials (Poly ams) (Poly bms) = sum
+mulPolynomials (Poly ams) (Poly bms) = prunePolynomial sum
   where products = [sclPolynomial aa (mulMonomialPolynomial am (Poly bms)) | (am, aa) <- Map.assocs ams]
         sum = foldl addPolynomials zeroPoly products
 
+powPolynomial :: Scalar -> Expr -> Expr
+powPolynomial (IScl 0) _ = poly [(oneMono, 1)]
+powPolynomial (IScl 1) x = x
+powPolynomial (IScl i) x
+  | i > 1 = esq x onePoly i
+    where esq sq acc 0 = acc
+          esq sq acc 1 = mulPolynomials sq acc
+          esq sq acc n = let 
+              sq' = mulPolynomials sq sq
+              half = n `shift` (-1)
+              shouldPow = odd n
+            in esq sq' (if shouldPow then mulPolynomials sq acc else acc) half
+
+-- | Given a pure polynomial expression, expands it out to a single polynomial.
 expandPolynomial :: Expr -> Expr
 expandPolynomial (B a Add b) = expandPolynomial (liftAssociative (B a Add b))
 expandPolynomial (B a Mul b) = expandPolynomial (liftAssociative (B a Mul b))
-expandPolynomial (I Add xs) = foldl addPolynomials zeroPoly polys
+expandPolynomial (B a Pow (A (Const (IScl p)))) = powPolynomial (IScl p) (expandPolynomial a) 
+expandPolynomial (I Add xs) = prunePolynomial (foldl addPolynomials zeroPoly polys)
   where polys = map expandPolynomial xs
-expandPolynomial (I Mul xs) = foldl mulPolynomials zeroPoly polys
+expandPolynomial (I Mul xs) = prunePolynomial (foldl mulPolynomials onePoly polys)
   where polys = map expandPolynomial xs
+expandPolynomial (Poly xs) = Poly xs
+expandPolynomial (A (Var v)) = poly [(mono [(v, 1)], 1)]
+expandPolynomial (A (Const x)) = poly [(oneMono, x)]
