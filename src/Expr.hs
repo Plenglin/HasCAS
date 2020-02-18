@@ -22,9 +22,12 @@ instance Ord Atom where
   compare (Var a) (Var b) = compare a b
 
 -- | A monomial with an empty map represents the value 1.
-data Monomial = Monomial (Map.Map String Expr) deriving (Eq, Ord)
+data Monomial = Monomial (Map.Map String Scalar) deriving (Eq, Ord)
 instance Show Monomial where
   show (Monomial vs) = concatMap (\(x, p) -> "(" ++ show x ++ "^" ++ show p ++ ")") (Map.assocs vs)
+
+mono :: [(String, Scalar)] -> Monomial
+mono xs = Monomial (Map.fromAscList xs)
 
 oneMono = Monomial Map.empty 
 
@@ -40,6 +43,12 @@ exprc x = A (Const x)
 
 neg1 :: Expr
 neg1 = exprc (-1)
+
+poly :: [(Monomial, Scalar)] -> Expr
+poly xs = Poly (Map.fromAscList xs)
+
+singlePoly :: Monomial -> Scalar -> Expr
+singlePoly m a = poly [(m, a)]
 
 zeroPoly :: Expr
 zeroPoly = Poly Map.empty 

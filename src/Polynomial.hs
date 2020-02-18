@@ -9,7 +9,7 @@ import TreeUtils
 
 -- | Removes zero powers from the monomial.
 pruneMonomial :: Monomial -> Monomial
-pruneMonomial (Monomial m) = Monomial (Map.filter (==0) m)
+pruneMonomial (Monomial m) = Monomial (Map.filter (/=0) m)
 
 -- | Assumes that the given polynomials have been simplified.
 addPolynomials :: Expr -> Expr -> Expr
@@ -18,7 +18,9 @@ addPolynomials (Poly ams) (Poly bms) = Poly unioned
 
 -- | Scales a polynomial by a scalar.
 sclPolynomial :: Scalar -> Expr -> Expr
-sclPolynomial a (Poly xs) = Poly (Map.map (*a) xs)
+sclPolynomial a (Poly xs) 
+  | a == 0 = zeroPoly
+  | otherwise = Poly (Map.map (*a) xs)
 
 -- | Returns the product of two monomials, pruned if necessary.
 mulMonomials :: Monomial -> Monomial -> Monomial

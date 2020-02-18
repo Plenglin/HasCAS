@@ -2,12 +2,15 @@ module Scalar where
 
 import Data.Ratio
 
-data Scalar = IScl Integer | RaScl Rational | ReScl Double deriving Eq
+data Scalar = IScl Integer | RaScl Rational | ReScl Double
 
 instance Show Scalar where
   show (IScl x) = show x
   show (RaScl x) = show x
   show (ReScl x) = show x
+
+instance Eq Scalar where
+  a == b = compare a b == EQ 
 
 instance Ord Scalar where
   compare (IScl a) (IScl b) = compare a b
@@ -17,6 +20,7 @@ instance Ord Scalar where
   compare (RaScl a) (ReScl b) = compare (fromRational a) b
   compare (ReScl a) (ReScl b) = compare a b
   compare a b = compare b a
+
 
 normalizeTypes :: Scalar -> Scalar -> (Scalar, Scalar)
 normalizeTypes (IScl l) (IScl r) = (IScl l, IScl r)
