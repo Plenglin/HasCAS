@@ -14,8 +14,8 @@ Items marked with an asterisk (*) might require some sort of decision tree or op
 - [ ] Substitution of variables
 - [ ] Evaluating constant expressions
 - [ ] Working with expressions
-    - [ ] Expanding polynomials
-    - [ ] Simplifying polynomials
+    - [x] Expanding polynomials
+    - [x] Simplifying polynomials
     - [ ] Factoring polynomials
     - [ ] Combining non-algebraic terms
 - [ ] Solving equations for x algebraically
@@ -44,3 +44,19 @@ Items marked with an asterisk (*) might require some sort of decision tree or op
                 - [ ] ...and identifying repeated terms
     - [ ] Multi-variable Calculus
         - Is going to be a bit of a headache
+
+## Integration by Parts methods
+
+### Heuristic
+
+[LIATE](https://math.stackexchange.com/questions/2123271/methods-for-choosing-u-and-dv-when-integrating-by-parts)
+
+Set u = LIATE in that order:
+
+1. logarithm
+2. inverse trigonometric function
+3. algebraic function
+4. trigonometric function
+5. exponential
+
+Or, instead of "choose u" reformulate as "choose dv"

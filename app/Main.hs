@@ -5,7 +5,7 @@ import Lib
 
 x = A (Var "x")
 y = A (Var "y")
-e = ((x + (y ^^^ 2) + 1) ^^^ 10)
+e = ((x + (x + 1) ^^^ 2) ^^^ 2)
 expanded = expandPolynomial e
 
 main :: IO ()
