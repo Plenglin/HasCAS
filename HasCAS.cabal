@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 132453dba06306a12637ec19a64c03693831127a370feada4052aa617678cb58
+-- hash: dbd1252580a7a386164b6ae1caff2bde9035b863c4847d73cfa60366fb39162e
 
 name:           HasCAS
 version:        0.1.0.0
@@ -58,6 +58,9 @@ test-suite HasCAS-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      PolynomialSpec
+      TestUtils
+      TreeUtilsSpec
       Paths_HasCAS
   hs-source-dirs:
       test

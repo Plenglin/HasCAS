@@ -11,20 +11,21 @@ import TreeUtils
 pruneMonomial :: Monomial -> Monomial
 pruneMonomial (Monomial m) = Monomial (Map.filter (==0) m)
 
--- | Moves 1-Monomials into the constant term.
-
 -- | Assumes that the given polynomials have been simplified.
 addPolynomials :: Expr -> Expr -> Expr
 addPolynomials (Poly ams) (Poly bms) = Poly unioned
   where unioned = Map.unionWith (+) ams bms
 
+-- | Scales a polynomial by a scalar.
 sclPolynomial :: Scalar -> Expr -> Expr
 sclPolynomial a (Poly xs) = Poly (Map.map (*a) xs)
 
+-- | Returns the product of two monomials, pruned if necessary.
 mulMonomials :: Monomial -> Monomial -> Monomial
-mulMonomials (Monomial m1) (Monomial m2) = Monomial unioned
+mulMonomials (Monomial m1) (Monomial m2) = pruneMonomial (Monomial unioned)
   where unioned = Map.unionWith (+) m1 m2
 
+-- | Returns the product of a monomial and a polynomial.
 mulMonomialPolynomial :: Monomial -> Expr -> Expr
 mulMonomialPolynomial (Monomial m) (Poly xs)  
   | null m = Poly xs
@@ -32,7 +33,7 @@ mulMonomialPolynomial (Monomial m) (Poly xs)
       where terms = Map.assocs xs
             terms' = [(mulMonomials (Monomial m) m2, p) | (m2, p) <- terms]
 
--- | Assumes that the given polynomials have been simplified.
+-- | Returns the product of two polynomials, assuming that the given polynomials have been simplified.
 mulPolynomials :: Expr -> Expr -> Expr
 mulPolynomials (Poly ams) (Poly bms) = sum
   where products = [sclPolynomial aa (mulMonomialPolynomial am (Poly bms)) | (am, aa) <- Map.assocs ams]
