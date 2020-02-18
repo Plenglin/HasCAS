@@ -56,8 +56,14 @@ spec = do
     it "should expand and convert expressions" $ do
       expandPolynomial ((exprc (-2)) * ((x ^^^ 5) + (x ^^^ 2) + (exprc (-3)))) `shouldBe` poly [(oneMono, (6)), (mono [("x", 2)], -2), (mono [("x", 5)], -2)]
       let a = exprc 3 * (x ^^^ 5) + (exprc (-2)) * ((x ^^^ 5) + (x ^^^ 2) + (exprc (-3)))
-        in expandPolynomial a `shouldBe` poly [(oneMono, (6)), (mono [("x", 2)], -2), (mono [("x", 5)], 1)]
+        in expandPolynomial a `shouldBe` poly [(oneMono, 6), (mono [("x", 2)], -2), (mono [("x", 5)], 1)]
     it "should eliminate zero-terms" $ do
       let a = exprc 2 * (x ^^^ 5) + (exprc (-2)) * ((x ^^^ 5) + (x ^^^ 2) + (exprc (-3)))
-        in expandPolynomial a `shouldBe` poly [(oneMono, (6)), (mono [("x", 2)], -2)]
+        in expandPolynomial a `shouldBe` poly [(oneMono, 6), (mono [("x", 2)], -2)]
+    it "should expand exponents" $ do
+      let a = (x + 1) ^^^ 3
+          mx = mono [("x", 1)]
+          mx2 = mono [("x", 2)]
+          mx3 = mono [("x", 3)]
+        in expandPolynomial a `shouldBe` poly [(oneMono, 1), (mx, 3), (mx2, 3), (mx3, 1)]
       
