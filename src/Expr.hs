@@ -24,7 +24,7 @@ instance Ord Atom where
 -- | A monomial with an empty map represents the value 1.
 data Monomial = Monomial (Map.Map String Scalar) deriving (Eq, Ord)
 instance Show Monomial where
-  show (Monomial vs) = concatMap (\(x, p) -> "(" ++ show x ++ "^" ++ show p ++ ")") (Map.assocs vs)
+  show (Monomial vs) = concatMap (\(x, p) -> "(" ++ x ++ "^" ++ show p ++ ")") (Map.assocs vs)
 
 mono :: [(String, Scalar)] -> Monomial
 mono xs = Monomial (Map.fromAscList xs)
@@ -62,7 +62,7 @@ parenShow _ (U op x) = show op ++ "(" ++ show x ++ ")"
 parenShow False (I Add xs) = "Sigma " ++ show xs
 parenShow False (I Mul xs) = "Prod " ++ show xs
 parenShow False (I op xs) = show op ++ " " ++ show xs
-parenShow False (Poly mons) = "Poly " ++ intercalate " + " (map show (Map.assocs mons))
+parenShow False (Poly mons) = "Poly " ++ intercalate " + " (map (\(Monomial m, k) -> show k ++ show (Monomial m)) (Map.assocs mons))
 
 parenShow True x = "(" ++ parenShow False x ++ ")"
 
