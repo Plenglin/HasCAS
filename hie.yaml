@@ -4,3 +4,5 @@ cradle:
       component: "HasCAS:test:HasCAS-test"
     - path: "./src"
       component: "HasCAS:lib"
+    - path: "./app"
+      component: "HasCAS:exe:HasCAS-exe"
