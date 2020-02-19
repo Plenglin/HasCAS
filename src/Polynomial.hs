@@ -4,7 +4,6 @@ import Data.Bits
 import qualified Data.Map as Map
     
 import Expr
-import Op
 import Scalar
 import TreeUtils
 

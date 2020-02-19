@@ -2,10 +2,34 @@ module Expr where
 
 import Debug.Trace
 import Scalar
-import Op
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Data.List
+
+data BOp = Add | Mul | Sub | Div | Pow deriving (Eq, Ord)
+data UOp = ApplyLeft Expr BOp | ApplyRight BOp Expr | Neg | Sqrt | Abs | Sign | Log | Sin | Cos | Tan | Sec | Csc | Cot deriving (Show, Eq, Ord)
+
+instance Show BOp where
+  show Add = "+"
+  show Mul = "*"
+  show Div = "/"
+  show Sub = "-"
+  show Pow = "^"
+
+identity :: BOp -> Scalar
+identity Add = 0
+identity Mul = 1
+identity Pow = 1
+
+repeated :: BOp -> BOp
+repeated Add = Mul
+repeated Mul = Pow
+
+scalarOp :: BOp -> Scalar -> Scalar -> Scalar
+scalarOp Add = (+)
+scalarOp Mul = (*)
+scalarOp Sub = (-)
+scalarOp Div = (/)
 
 data Atom = Const Scalar | Var String deriving Eq
 instance Show Atom where

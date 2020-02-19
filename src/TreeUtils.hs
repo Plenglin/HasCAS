@@ -7,7 +7,6 @@ import qualified Data.Set as Set
 import Debug.Trace (trace)
 
 import Scalar
-import Op
 import Expr
 
 

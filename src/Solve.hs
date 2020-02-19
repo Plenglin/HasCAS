@@ -1,27 +1,47 @@
 module Solve where
 
-
 import qualified Data.Map.Strict as Map
 
 import Expr
 
+data ExprCompare = Equals | LessOrEqual | GreaterOrEqual | Less | Greater
+invSign :: ExprCompare -> ExprCompare
+invSign Equals = Equals
+invSign LessOrEqual = GreaterOrEqual
+invSign GreaterOrEqual = LessOrEqual
+invSign Less = Greater
+invSign Greater = Less 
 
-data VarPath = None | Var Expr | Split Expr [VarPath]
+newtype Equation = Equation { left :: Expr, comp :: ExprCompare, right :: Expr }
+
+data VarPath = Empty | Found Expr | Parent Expr [VarPath] deriving (Show, Eq)
+
+emptyPath :: VarPath -> Bool
+emptyPath Empty = True
+emptyPath (Parent _ []) = True
+emptyPath _ = False
+
+prunePath :: VarPath -> VarPath
+prunePath (Parent x xs) = 
+  if null pruned
+    then Empty
+    else Parent x pruned
+  where pruned = filter (not . emptyPath) xs
+prunePath x = x
 
 -- | Finds paths to different variable instances
-findVar :: String -> Expr -> [[Expr]]
-findVar v x = search [] x
-  where search stack (B a op b) =
-          let search' = search (B a op b : stack)
-            in search' a ++ search' b
-        search stack (U op x) = search (U op x : stack) x
-        search stack (I op xs) =
-          let search' = search (I op xs : stack)
-            in concat [search' x | x <- xs]
-        search stack (A (Var v2)) 
-          | v == v2 = [A (Var v) : stack]
-        search stack (Poly xs) = [
-            Poly xs : stack | 
-            or [Map.member v ms | Monomial ms <- Map.keys xs]
-          ]
-        search _ _ = []
+findVar :: String -> Expr -> VarPath
+findVar v (A (Var v2))
+  | v == v2 = Found (A (Var v2))
+findVar v (B a op b) = prunePath (Parent (B a op b) [findVar v a, findVar v b])
+findVar v (I op xs) = prunePath (Parent (I op xs) [findVar v x | x <- xs])
+findVar v (U op x) = prunePath (Parent (U op x) [findVar v x])
+findVar v (Poly pmap) = 
+  if or [Map.member v vs | (Monomial vs) <- Map.keys pmap]  -- v is in one of the monomials
+    then Found (Poly pmap)
+    else Empty
+findVar _ _ = Empty
+
+-- 
+toUOp :: String -> Expr -> UOp
+toUOp var (U op x) = op

@@ -9,15 +9,16 @@ import TestUtils
 spec :: Spec
 spec = 
   describe "findVar" $ do
+    it "finds single variables" $ 
+      findVar "x" x `shouldBe` Found x
+    it "finds vars in binary exprs" $
+      findVar "x" (3 + x) `shouldBe` Parent (3 + x) [Found x]
     it "finds vars in expressions with single instance of x" $ do
-      findVar "x" x `shouldBe` [[x]]
-      findVar "x" (3 + x) `shouldBe` [[x, (3 + x)]]
-      findVar "x" (5 * (3 + x)) `shouldBe` [[x, (3 + x), 5 * (3 + x)]]
+      findVar "x" (5 * (3 + x)) `shouldBe` Parent (5 * (3 + x)) [Parent (3 + x) [Found x]]
       let a1 = I Add [3, 2, a2, 1]
           a2 = I Mul [a3]
           a3 = x ^^^ 5
-      findVar "x" a1 `shouldBe` [[x, a3, a2, a1]]
-      findVar "x" (x + y) `shouldBe` [[x, x + y]]
-    it "finds vars in expressions with multiple instances of x" $ do
-      findVar "x" (x + (y + x)) `shouldBe` [[x, x + (y + x)], [x, y + x, x + (y + x)]]
-      findVar "x" (I Add [3 - x, 9 + x, 2 ^^^ x]) `shouldBe` []
+      findVar "x" a1 `shouldBe` Parent a1 [Parent a2 [Parent a3 [Found x]]]
+      findVar "x" (x + y) `shouldBe` Parent (x + y) [Found x]
+    it "finds vars in expressions with multiple instances of x" $ 
+      findVar "x" (x + (y + x)) `shouldBe` Parent (x + (y + x)) [Found x, Parent (y + x) [Found x]]

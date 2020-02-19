@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 105adbcee16bb70ee5c6689ec16c24e917c00863c1a4303d40a4802ba7eaa043
+-- hash: 29accb5ebf77f49e8b9e9dcaea26c50b0f9f2f3eaba7f0dfd262aac2d9093a84
 
 name:           HasCAS
 version:        0.1.0.0
@@ -29,7 +29,6 @@ library
   exposed-modules:
       Expr
       Lib
-      Op
       Polynomial
       Scalar
       Solve
