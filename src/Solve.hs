@@ -14,7 +14,7 @@ invSign GreaterOrEqual = LessOrEqual
 invSign Less = Greater
 invSign Greater = Less
 
-data Equation = Equation { left :: Expr, comp :: ExprCompare, right :: Expr }
+data Equation = Equation Expr ExprCompare Expr
 
 -- | Represents the results of a search for instances of a variable.
 -- | Empty means the variable wasn't found along this path.
@@ -22,6 +22,7 @@ data Equation = Equation { left :: Expr, comp :: ExprCompare, right :: Expr }
 -- | Compose is a chain of unary functions encasing the variable.
 -- | Split means multiple variable instances were found.
 data VarPath = Empty | Found Expr | Compose UOp VarPath | Split BOp [VarPath] deriving (Show, Eq)
+data PathEquation = PathEquation VarPath ExprCompare VarPath
 
 emptyPath :: VarPath -> Bool
 emptyPath Empty = True
@@ -34,7 +35,7 @@ prunePath (Split op [x]) = x
 prunePath (Split op xs) = Split op (filter (not . emptyPath) xs)
 prunePath x = x
 
--- | Finds paths to different variable instances
+-- | Finds paths to every instance of a given variable.
 findVar :: String -> Expr -> VarPath
 findVar v (A (Var v2))
   | v == v2 = Found (A (Var v2))
@@ -69,6 +70,10 @@ findVar v (I op xs) =
 
 findVar v (U op x) = Compose op (findVar v x)
 findVar _ _ = Empty
+
+unapplyPath :: Expr -> VarPath -> (Expr, VarPath)
+unapplyPath x (Compose op vp) = unapplyPath (applyUOps (invOp op) x) vp
+unapplyPath x vp = (x, vp)
 
 -- 
 toUOp :: String -> Expr -> UOp

@@ -7,7 +7,7 @@ import TestUtils
 
 
 spec :: Spec
-spec = 
+spec = do
   describe "findVar" $ do
     it "finds single variables" $ 
       findVar "x" x `shouldBe` Found x
@@ -23,3 +23,8 @@ spec =
       findVar "x" (x + y) `shouldBe` Compose (RApply Add y) (Found x)
     it "use Split in expressions with multiple instances of x" $ 
       findVar "x" (x + (y ^^^ x)) `shouldBe` Split Add [Found x, Compose (LApply y Pow) (Found x)]
+  describe "unapplyPath" $ do
+    it "terminates on single vars" $
+      unapplyPath w (Found x) `shouldBe` (w, Found x)
+    it "unapplies single compositions" $
+      unapplyPath w (Compose (RApply Pow 3) (Found x)) `shouldBe` (U (RApply Pow (exprc 1 / exprc 3)) w, Found x)

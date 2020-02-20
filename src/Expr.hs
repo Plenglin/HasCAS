@@ -7,7 +7,7 @@ import qualified Data.Set as Set
 import Data.List
 
 data BOp = Add | Mul | Sub | Div | Pow deriving (Eq, Ord)
-data UOp = LApply Expr BOp | RApply BOp Expr | Neg | Sqrt | Abs | Sign | Log | Sin | Cos | Tan | Sec | Csc | Cot deriving (Show, Eq, Ord)
+data UOp = LApply Expr BOp | RApply BOp Expr | Neg | Sqrt | Abs | PlusMinus | Sign | Log | Sin | Cos | Tan | Sec | Csc | Cot deriving (Show, Eq, Ord)
 
 instance Show BOp where
   show Add = "+"
@@ -15,6 +15,27 @@ instance Show BOp where
   show Div = "/"
   show Sub = "-"
   show Pow = "^"
+
+-- | Returns the composition of UOps required to achieve the inverse of the given op.
+invOp :: UOp -> [UOp]
+invOp Neg = [Neg]
+invOp Sqrt = [RApply Pow 2]
+invOp Abs = [PlusMinus]
+invOp (LApply x Add) = [RApply Sub x]
+invOp (RApply Add x) = [RApply Sub x]
+invOp (LApply x Mul) = [RApply Div x]
+invOp (RApply Mul x) = [RApply Div x]
+invOp (LApply x Sub) = [LApply x Sub]
+invOp (RApply Sub p) = [RApply Add p]
+invOp (LApply x Div) = [LApply x Div]
+invOp (RApply Div x) = [RApply Mul x]
+invOp (LApply b Pow) = [RApply Div (U Log b), Log]
+invOp (RApply Pow p) = [RApply Pow (1 / p)]
+
+-- | Applies the given UOps to an expression in order.
+applyUOps :: [UOp] -> Expr -> Expr
+applyUOps [] a = a
+applyUOps (o:os) a = U o (applyUOps os a) 
 
 identity :: BOp -> Scalar
 identity Add = 0
