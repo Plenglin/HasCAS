@@ -119,4 +119,3 @@ combineLikeTerms (I op exprs) =
     nonConstSum = vars ++ nonVars
 
 combineLikeTerms x = x
-

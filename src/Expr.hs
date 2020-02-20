@@ -52,6 +52,18 @@ scalarOp Mul = (*)
 scalarOp Sub = (-)
 scalarOp Div = (/)
 
+eval :: Expr -> Scalar
+eval (I op xs) = foldl (scalarOp op) (identity op) (map eval xs)
+eval (B a op b) = scalarOp op (eval a) (eval b)
+eval (U op x) = scalarUOp op (eval x)
+eval (A (Const x)) = x
+eval (A (Var x)) = error ("variable " ++ show x ++ " has not been bound")
+
+scalarUOp :: UOp -> Scalar -> Scalar
+scalarUOp (LApply l op) x = eval (B l op (A (Const x)))
+scalarUOp (RApply op r) x = eval (B (A (Const x)) op r)
+scalarUOp Neg x = -x
+
 groupable :: BOp -> Bool
 groupable Add = True
 groupable Mul = True
