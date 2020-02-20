@@ -30,8 +30,14 @@ expandInverse (U op x) = U op (expandInverse x)
 expandInverse x = x
 
 groupIBO :: Expr -> Expr
-groupIBO (B a op b) = I op (touching op (B a op b))
+groupIBO (B a op b)  
+  | op == Add || op == Mul = I op (touching op (B a op b))
 groupIBO x = x
+
+pruneIBO :: Expr -> Expr
+pruneIBO (I op []) = exprc (identity op)
+pruneIBO (I op [x]) = x
+pruneIBO x = x
 
 ungroupIBO :: Expr -> Expr
 ungroupIBO (I Mul [A (Const k), A (Var x)]) = exprv x * exprc k
