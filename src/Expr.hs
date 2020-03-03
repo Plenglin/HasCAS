@@ -7,7 +7,7 @@ import qualified Data.Set as Set
 import Data.List
 
 data BOp = Add | Mul | Sub | Div | Pow deriving (Eq, Ord)
-data UOp = LApply Expr BOp | RApply BOp Expr | Neg | Sqrt | Abs | PlusMinus | Sign | Log | Sin | Cos | Tan | Sec | Csc | Cot deriving (Show, Eq, Ord)
+data UOp = LApply Expr BOp | RApply BOp Expr | Neg | Sqrt | Abs | PlusMinus | Sign | Log | Sin | ArcSin | Cos | ArcCos | Tan | Sec | Csc | Cot deriving (Show, Eq, Ord)
 
 instance Show BOp where
   show Add = "+"
@@ -31,6 +31,10 @@ invOp (LApply x Div) = [LApply x Div]
 invOp (RApply Div x) = [RApply Mul x]
 invOp (LApply b Pow) = [RApply Div (U Log b), Log]
 invOp (RApply Pow p) = [RApply Pow (1 / p)]
+invOp Cos = [ArcCos]
+invOp ArcCos = [Cos]
+invOp Sin = [ArcSin]
+invOp ArcSin = [Sin]
 
 -- | Applies the given UOps to an expression in order.
 applyUOps :: [UOp] -> Expr -> Expr

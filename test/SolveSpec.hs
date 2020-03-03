@@ -24,7 +24,9 @@ spec = do
     it "use Split in expressions with multiple instances of x" $ 
       findVar "x" (x + (y ^^^ x)) `shouldBe` Split Add [Found x, Compose (LApply y Pow) (Found x)]
   describe "unapplyPath" $ do
-    it "terminates on single vars" $
-      unapplyPath w (Found x) `shouldBe` (w, Found x)
+    it "returns empty list on single vars" $
+      unapplyPath (Found x) `shouldBe` ([], Found x)
     it "unapplies single compositions" $
-      unapplyPath w (Compose (RApply Pow 3) (Found x)) `shouldBe` (U (RApply Pow (exprc 1 / exprc 3)) w, Found x)
+      unapplyPath (Compose (RApply Pow 3) (Found x)) `shouldBe` ([RApply Pow (exprc 1 / exprc 3)], Found x)
+    it "unapplies multiple compositions" $
+      unapplyPath (Compose Sin (Compose Cos (Found x))) `shouldBe` ([ArcSin, ArcCos], Found x)

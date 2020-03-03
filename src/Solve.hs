@@ -71,11 +71,21 @@ findVar v (I op xs) =
 findVar v (U op x) = Compose op (findVar v x)
 findVar _ _ = Empty
 
-unapplyPath :: Expr -> VarPath -> (Expr, VarPath)
-unapplyPath x (Compose op vp) = unapplyPath (applyUOps (invOp op) x) vp
-unapplyPath x vp = (x, vp)
+data SolutionSet = 
 
--- 
+-- | Unapplies Compose until a non-unary operation is found. The first output is a list of
+-- | inverted ops, and the second output is the next non-unary operation.
+unapplyPath :: VarPath -> ([UOp], VarPath)
+unapplyPath (Compose op path) = (invOp op ++ ops, rest)
+  where (ops, rest) = unapplyPath path
+unapplyPath path = ([], path)
+
+vpToExpr :: VarPath -> Expr
+vpToExpr (Found v) = v
+vpToExpr (Compose op vp) = U op (vpToExpr vp)
+vpToExpr (Split op xs) = I op [vpToExpr x | x <- xs]
+
+-- | 
 toUOp :: String -> Expr -> UOp
 toUOp var (U op x) = op
 
