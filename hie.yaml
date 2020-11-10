@@ -1,8 +1,13 @@
 cradle:
-  stack:
-    - path: "./test"
-      component: "HasCAS:test:HasCAS-test"
-    - path: "./src"
-      component: "HasCAS:lib"
-    - path: "./app"
+  cabal:
+    - path: "src"
+      component: "lib:HasCAS"
+
+    - path: "app/Main.hs"
       component: "HasCAS:exe:HasCAS-exe"
+
+    - path: "app/Paths_HasCAS.hs"
+      component: "HasCAS:exe:HasCAS-exe"
+
+    - path: "test"
+      component: "HasCAS:test:HasCAS-test"
