@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 443cafa56b9c556e1baea74cd566acd4acae915ae68703618072a031df00fba2
+-- hash: 8991bdd6d1975fa5a7a42dcf239a42dd9cd60badf55603e68c82dbd3f4fbf5a8
 
 name:           HasCAS
 version:        0.1.0.0
@@ -27,15 +27,9 @@ source-repository head
 
 library
   exposed-modules:
-      Expr
       HasCAS.Expr
       HasCAS.Function
       HasCAS.Scalar
-      Lib
-      Polynomial
-      Scalar
-      Solve
-      TreeUtils
   other-modules:
       Paths_HasCAS
   hs-source-dirs:
@@ -61,10 +55,7 @@ test-suite HasCAS-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      PolynomialSpec
-      SolveSpec
-      TestUtils
-      TreeUtilsSpec
+      HasCAS.ExprSpec
       Paths_HasCAS
   hs-source-dirs:
       test

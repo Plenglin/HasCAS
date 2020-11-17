@@ -12,6 +12,12 @@ data Function a = Function
   , inverse :: Maybe (Function a)
   }
 
+instance Show (Function a) where 
+  show f = name f
+
+instance Eq (Function a) where 
+  f == g = (name f) == (name g)
+
 -- | Add a value.
 add :: (Ring t) => t -> Function t
 add k = Function
