@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 29accb5ebf77f49e8b9e9dcaea26c50b0f9f2f3eaba7f0dfd262aac2d9093a84
+-- hash: 443cafa56b9c556e1baea74cd566acd4acae915ae68703618072a031df00fba2
 
 name:           HasCAS
 version:        0.1.0.0
@@ -28,6 +28,9 @@ source-repository head
 library
   exposed-modules:
       Expr
+      HasCAS.Expr
+      HasCAS.Function
+      HasCAS.Scalar
       Lib
       Polynomial
       Scalar
