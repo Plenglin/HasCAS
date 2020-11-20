@@ -25,37 +25,21 @@ fromEvalResult :: EvalResult t -> Expr t
 fromEvalResult (Right x) = Scl x
 fromEvalResult (Left x) = x
 
-evaluate :: (Ring t, Exponentiable t t t) => Expr t -> EvalResult t
+evaluate :: (Ring t) => Expr t -> EvalResult t
 evaluate (Scl x) = Right x
 evaluate (Var x) = Left (Var x)
 
-evaluate (Add xs) = 
+evaluate (Add xs) = iterOp (+) idAdd Add xs
+
+evaluate (Mul xs) = iterOp (*) idMul Mul xs
+
+iterOp op i agg xs = 
   let 
     evaluations = map evaluate xs    
     (exprs, scls) = partitionEithers evaluations
-    scalarSum = foldr (+) idAdd scls
-    exprSum = Add ((Scl scalarSum):exprs)
+    scalarSum = foldr op i scls
+    exprSum = agg ((Scl scalarSum):exprs)
   in 
     case exprs of
       ([]) -> Right scalarSum
       _ -> Left exprSum
-
-evaluate (Mul xs) = 
-  let 
-    evaluations = map evaluate xs    
-    (exprs, scls) = partitionEithers evaluations
-    scalarSum = foldr (*) idMul scls
-    exprSum = Add ((Scl scalarSum):exprs)
-  in 
-    case exprs of
-      ([]) -> Right scalarSum
-      _ -> Left exprSum
-
-evaluate (Pow b p) =
-  let 
-    eb = evaluate b
-    ep = evaluate p
-  in 
-    case (eb, ep) of
-      (Right sb, Right sp) -> Right (pow sb sp)
-      (_, _) -> Left (Pow (fromEvalResult eb) (fromEvalResult ep))
