@@ -4,7 +4,7 @@ module HasCAS.Scalar where
 import qualified Prelude
 import Prelude hiding ((+), (*), (-), (/), (^))
 
-class (Show a, Eq a, Ord a) => Ring a where 
+class (Show a, Eq a) => Ring a where 
   -- | Addition
   (+) :: a -> a -> a
   -- | Multiplication

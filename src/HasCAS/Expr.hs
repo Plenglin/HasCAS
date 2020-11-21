@@ -19,6 +19,13 @@ data Expr a =
   | F (Function a) (Expr a)
   deriving (Show, Eq)
 
+instance Ring a => Ring (Expr a) where
+  a + b = Add [a, b]
+  a * b = Mul [a, b]
+  idAdd = Scl idAdd
+  idMul = Scl idMul
+
+
 type EvalResult t = Either (Expr t) t
 
 fromEvalResult :: EvalResult t -> Expr t
